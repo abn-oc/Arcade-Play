@@ -35,11 +35,25 @@ const sqlConfig: SqlConfig = {
   },
 };
 
-export default async function connectDB(): Promise<void> {
-  try {
-    await sql.connect(sqlConfig);
-    console.log('Connected to Database');
-  } catch (err) {
-    console.error('Error:', err);
+let pool: sql.ConnectionPool | null = null;
+
+export async function connectDB(): Promise<sql.ConnectionPool> {
+  if (!pool) {
+    try {
+      pool = await new sql.ConnectionPool(sqlConfig).connect();
+      console.log('Connected to Database');
+    } catch (err) {
+      console.error('Error connecting to database:', err);
+      throw err;
+    }
+  }
+  return pool;
+}
+
+export async function disconnectDB() {
+  if (pool) {
+    await pool.close();
+    pool = null;
+    console.log('Database connection closed');
   }
 }
