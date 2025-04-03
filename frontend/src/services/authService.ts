@@ -103,6 +103,7 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
   try {
     // Get user info from Google token
     const googleUser = parseJwt(credential);
+    console.log(googleUser);
     
     // Sign in with your API
     await signin({
@@ -111,33 +112,44 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
       providerUserID: googleUser.sub
     });
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      // User doesn't exist, try to sign up
-      try {
+    console.log('eeeeeeeeeeeeeeeeeeeeeeeeee');
+
+    if (error instanceof Error) {
+      if (error.message.trim() === "Invalid credentials") {
+        console.log("yo inv creds");
         const googleUser = parseJwt(credential);
-        await signup({
-          email: googleUser.email,
-          username: googleUser.email.split('@')[0], // Create username from email
-          authProvider: 'google',
-          providerUserID: googleUser.sub,
-          firstName: googleUser.given_name,
-          lastName: googleUser.family_name
-        });
-        
-        // After signup, sign in
-        await signin({
-          email: googleUser.email,
-          authProvider: 'google',
-          providerUserID: googleUser.sub
-        });
-      } catch (signupError) {
-        throw new Error('Failed to create account with Google');
+        console.log("signing up w google");
+
+        try {
+          await signup({
+            email: googleUser.email,
+            username: googleUser.email.split('@')[0], // Create username from email
+            authProvider: 'google',
+            providerUserID: googleUser.sub,
+            firstName: googleUser.given_name,
+            lastName: googleUser.family_name
+          });
+
+          console.log("done, signing in w google");
+
+          // After signup, sign in
+          await signin({
+            email: googleUser.email,
+            authProvider: 'google',
+            providerUserID: googleUser.sub
+          });
+
+        } catch (signupError) {
+          throw new Error('Failed to create account with Google');
+        }
       }
     } else {
       throw new Error('Failed to sign in with Google');
     }
   }
+  console.log('eeeeeeeeeeeeeeeeeeeeeeeeee');
 };
+
 
 // Helper function to parse JWT token
 const parseJwt = (token: string) => {
