@@ -1,4 +1,5 @@
 import authRoutes from "./routes/authRoutes";
+import friendRoutes from "./routes/friendRoutes";
 import gameRoutes from "./routes/gameRoutes"
 
 const express = require('express')

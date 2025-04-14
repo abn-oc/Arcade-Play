@@ -1,7 +1,7 @@
 // src/services/friendServices.ts
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/auth'; // Adjust this to your actual API URL
+const API_URL = 'http://localhost:3000/friends'; // Adjust this to your actual API URL
 
 export const addFriend = async (userId: number, friendId: number) => {
   try {
