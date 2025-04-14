@@ -35,10 +35,10 @@ io.on("connection", (socket) => {
     onlineUsers.set(username, socket.id);
   });
 
-  socket.on('send-friend-request', ({ to, from }) => {
+  socket.on('send-friend-request', ({ to, from, fromID }) => {
     const targetSocketId = onlineUsers.get(to);
     if (targetSocketId) {
-      io.to(targetSocketId).emit('receive-friend-request', { from });
+      io.to(targetSocketId).emit('receive-friend-request', { from, fromID });
     }
   });
 

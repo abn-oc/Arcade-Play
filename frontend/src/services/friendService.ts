@@ -11,3 +11,33 @@ export const addFriend = async (userId: number, friendId: number) => {
     throw new Error(error.response?.data?.message || 'Failed to add friend');
   }
 };
+
+// services/friendService.ts
+
+interface Friend {
+    id: number;
+    username: string;
+  }
+  
+export async function getFriends(userId: number): Promise<Friend[]> {
+    try {
+      const response = await fetch(`${API_URL}/list`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to fetch friends');
+      }
+  
+      const friends: Friend[] = await response.json();
+      return friends;
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+      throw error; // or return empty array, depending on how you want to handle errors
+    }
+  }
+  

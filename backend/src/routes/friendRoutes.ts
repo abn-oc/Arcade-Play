@@ -38,4 +38,48 @@ friendRoutes.post('/add', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
+friendRoutes.post('/list', async (req: Request, res: Response): Promise<any> => {
+    const { userId } = req.body;
+  
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+  
+    try {
+      const pool = await connectDB();
+  
+      // Get all friendships involving the user
+      const friendsResult = await pool.request()
+        .input('UserID', sql.Int, userId)
+        .query(`
+          SELECT * FROM Friends 
+          WHERE UserID = @UserID OR FriendID = @UserID
+        `);
+  
+      const friendIds = friendsResult.recordset.map(row =>
+        row.UserID === userId ? row.FriendID : row.UserID
+      );
+  
+      if (friendIds.length === 0) {
+        return res.status(200).json([]);
+      }
+  
+      // Fetch usernames of all friend IDs
+      const idsList = friendIds.join(','); // create comma-separated list
+      const userQuery = await pool.request().query(`
+        SELECT ID, Username FROM Users WHERE ID IN (${idsList})
+      `);
+  
+      const friends = userQuery.recordset.map(user => ({
+        id: user.ID,
+        username: user.Username,
+      }));
+  
+      res.status(200).json(friends);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+});
+  
+
 export default friendRoutes;

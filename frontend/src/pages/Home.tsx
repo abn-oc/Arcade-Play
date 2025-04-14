@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import gameService from '../services/gameService';
 import { io, Socket } from 'socket.io-client';
+import { addFriend } from '../services/friendService';
+import { getFriends } from '../services/friendService'; // Import the getFriends function
 
 let socket: Socket;
 
@@ -18,8 +20,24 @@ export default function Home() {
     const chatEndRef = useRef<HTMLDivElement | null>(null);
 
     const [usernameToAdd, setUsernameToAdd] = useState('');
-    const [incomingRequests, setIncomingRequests] = useState<string[]>([]);
+    const [incomingRequests, setIncomingRequests] = useState<{ from: string, fromID: number }[]>([]);
     const [friends, setFriends] = useState<string[]>([]);
+
+    // Fetch friend list when page loads
+    useEffect(() => {
+        if (isLoggedIn && user?.ID) {
+            const fetchFriendsList = async () => {
+                try {
+                    const friendList = await getFriends(user.ID); // Fetch friends from the service
+                    console.log(friendList)
+                    setFriends(friendList.map(friend => friend.username)); // Assume `username` is the field returned
+                } catch (err) {
+                    console.error('Error fetching friends:', err);
+                }
+            };
+            fetchFriendsList();
+        }
+    }, [isLoggedIn, user]);
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -28,7 +46,7 @@ export default function Home() {
                     const fetchedGames = await gameService.getAllGames();
                     setGames(fetchedGames);
                 } catch (err) {
-                    console.error("Error fetching games:", err);
+                    console.error('Error fetching games:', err);
                 }
             };
             fetchGames();
@@ -54,8 +72,9 @@ export default function Home() {
             setMessages((prev) => [...prev, msg]);
         });
 
-        socket.on('receive-friend-request', ({ from }) => {
-            setIncomingRequests((prev) => [...prev, from]);
+        socket.on('receive-friend-request', ({ from, fromID }) => {
+            console.log(`received req from ${from} id ${fromID}`);
+            setIncomingRequests((prev) => [...prev, { from, fromID }]);
         });
 
         return () => {
@@ -80,14 +99,14 @@ export default function Home() {
             setGameDetails(game);
             setSelectedGame(gameId);
         } catch (err) {
-            console.error("Error fetching game details:", err);
+            console.error('Error fetching game details:', err);
         }
     };
 
     const sendMessage = () => {
         if (messageInput.trim()) {
             const msg = {
-                sender: user?.Username || user?.Email || "Anonymous",
+                sender: user?.Username || user?.Email || 'Anonymous',
                 content: messageInput.trim()
             };
             socket.emit('globalMessage', msg);
@@ -99,7 +118,8 @@ export default function Home() {
         if (!usernameToAdd.trim() || !user?.Username) return;
         socket.emit('send-friend-request', {
             to: usernameToAdd.trim(),
-            from: user.Username
+            from: user.Username,
+            fromID: user.ID
         });
         setUsernameToAdd('');
     };
@@ -149,15 +169,16 @@ export default function Home() {
                     <div className="mt-4 w-full max-w-xs bg-yellow-100 border border-yellow-400 p-2 rounded">
                         <h4 className="font-semibold text-yellow-800 mb-2">Friend Requests</h4>
                         <ul className="space-y-2">
-                            {incomingRequests.map((username, index) => (
+                            {incomingRequests.map((req, index) => (
                                 <li key={index} className="flex justify-between items-center bg-white p-2 rounded">
-                                    <span>{username}</span>
+                                    <span>{req.from}</span>
                                     <button
                                         className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                                         onClick={() => {
-                                            console.log(`Friend accepted: Add ${username} to your friends list here.`);
-                                            setFriends(prev => [...prev, username]);
-                                            setIncomingRequests(prev => prev.filter(name => name !== username));
+                                            console.log(`Friend accepted: Add ${req.from} to your friends list here.`);
+                                            setFriends(prev => [...prev, req.from]);
+                                            setIncomingRequests(prev => prev.filter(name => name.from !== req.from));
+                                            if (user) addFriend(user.ID, req.fromID);
                                         }}
                                     >
                                         Accept
@@ -169,7 +190,7 @@ export default function Home() {
                 )}
 
                 {/* Friend List */}
-                {friends.length > 0 && (
+                {friends.length >= 0 && (
                     <div className="mt-4 w-full max-w-xs bg-green-100 border border-green-400 p-2 rounded">
                         <h4 className="font-semibold text-green-800 mb-2">Friends</h4>
                         <ul className="space-y-1">
@@ -231,7 +252,7 @@ export default function Home() {
                     />
                     <button
                         onClick={sendMessage}
-                        className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 transition-colors"
+                        className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
                     >
                         Send
                     </button>
