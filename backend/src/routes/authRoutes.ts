@@ -158,4 +158,92 @@ authRoutes.get("/profile", authenticateToken, async (req: Request, res: Response
   }
 });
 
+// Edit Username
+authRoutes.patch("/edit-username", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  const { newUsername } = req.body;
+  if (!newUsername) {
+    return res.status(400).json({ error: "New username is required" });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    // Check if new username already exists
+    const usernameCheck = await pool.request()
+      .input("Username", sql.NVarChar(50), newUsername)
+      .query("SELECT COUNT(*) AS count FROM Users WHERE Username = @Username");
+
+    if (usernameCheck.recordset[0].count > 0) {
+      return res.status(409).json({ error: "Username already taken" });
+    }
+
+    // Update username
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .input("Username", sql.NVarChar(50), newUsername)
+      .query("UPDATE Users SET Username = @Username WHERE ID = @ID");
+
+    res.json({ message: "Username updated successfully" });
+  } catch (err) {
+    console.error("Edit username error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Change Password
+authRoutes.patch("/change-password", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  const { originalPassword, newPassword } = req.body;
+  if (!originalPassword || !newPassword) {
+    return res.status(400).json({ error: "Both original and new passwords are required" });
+  }
+
+  try {
+    const pool = await connectDB();
+    const userQuery = await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .query("SELECT Passwords FROM Users WHERE ID = @ID");
+
+    const user = userQuery.recordset[0];
+
+    if (!user || !user.Passwords) {
+      return res.status(404).json({ error: "User not found or password not set" });
+    }
+
+    const isMatch = await bcrypt.compare(originalPassword, user.Passwords);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Original password is incorrect" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .input("NewPassword", sql.NVarChar(255), hashedNewPassword)
+      .query("UPDATE Users SET Passwords = @NewPassword WHERE ID = @ID");
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete Account (Soft delete)
+authRoutes.delete("/delete-account", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  try {
+    const pool = await connectDB();
+
+    // Soft delete the user
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .query("UPDATE Users SET IsDeleted = 1 WHERE ID = @ID");
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 export default authRoutes;

@@ -150,6 +150,67 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
   console.log('eeeeeeeeeeeeeeeeeeeeeeeeee');
 };
 
+// Edit username
+export const editUsername = async (newUsername: string): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    await axios.patch(`${API_URL}/edit-username`, { newUsername }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.error || 'Failed to update username');
+    }
+    throw new Error('Network error, please try again');
+  }
+};
+
+// Change password
+export const changePassword = async (originalPassword: string, newPassword: string): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    await axios.patch(`${API_URL}/change-password`, {
+      originalPassword,
+      newPassword
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.error || 'Failed to change password');
+    }
+    throw new Error('Network error, please try again');
+  }
+};
+
+// Delete account (soft delete)
+export const deleteAccount = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    await axios.delete(`${API_URL}/delete-account`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    removeToken(); // Remove token after deletion
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.error || 'Failed to delete account');
+    }
+    throw new Error('Network error, please try again');
+  }
+};
+
 
 // Helper function to parse JWT token
 const parseJwt = (token: string) => {
@@ -180,5 +241,8 @@ export default {
   getProfile,
   signinWithGoogle,
   isAuthenticated,
-  getAuthHeaders
+  getAuthHeaders,
+  deleteAccount,
+  editUsername,
+  changePassword
 };
