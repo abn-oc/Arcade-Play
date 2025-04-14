@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import useAuth from '../hooks/useAuth';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Landing() {
     // Sign-in state
@@ -24,6 +26,14 @@ export default function Landing() {
         handleGoogleSignin, 
         handleSignout 
     } = useAuth();
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!loading && isLoggedIn) {
+            navigate('/home');
+        }
+    }, [isLoggedIn, loading, navigate]);
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,7 +73,7 @@ export default function Landing() {
     if (loading) {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
-
+    
     return (
         <div className='flex flex-col gap-4 items-center justify-center min-h-screen bg-gray-50'>
             {isLoggedIn ? (
