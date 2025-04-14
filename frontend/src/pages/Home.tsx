@@ -201,6 +201,9 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Profile */}
+                <button onClick={() => navigate('/profile')}>profile</button>
+
                 {/* Display Games */}
                 <div className="mt-6 flex flex-wrap gap-4 justify-center">
                     {games.length > 0 ? (

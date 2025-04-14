@@ -1,7 +1,17 @@
 // src/hooks/useAuth.ts
 
 import { useState, useEffect, useCallback } from 'react';
-import { signin, signup, signout, getProfile, signinWithGoogle, isAuthenticated } from '../services/authService';
+import {
+  signin,
+  signup,
+  signout,
+  getProfile,
+  signinWithGoogle,
+  isAuthenticated,
+  editUsername,
+  changePassword,
+  deleteAccount
+} from '../services/authService';
 
 interface UserProfile {
   ID: number;
@@ -39,6 +49,9 @@ interface UseAuthReturn {
   handleGoogleSignin: (credential: string) => Promise<void>;
   handleSignout: () => void;
   refreshProfile: () => Promise<void>;
+  handleEditUsername: (newUsername: string) => Promise<void>;
+  handleChangePassword: (originalPassword: string, newPassword: string) => Promise<void>;
+  handleDeleteAccount: () => Promise<void>;
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -132,6 +145,62 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoggedIn(false);
   };
 
+  // ✅ New Functions for Profile Page
+
+  const handleEditUsername = async (newUsername: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await editUsername(newUsername);
+      await refreshProfile();
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (originalPassword: string, newPassword: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await changePassword(originalPassword, newPassword);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await deleteAccount();
+      setUser(null);
+      setIsLoggedIn(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     user,
     loading,
@@ -141,7 +210,10 @@ export const useAuth = (): UseAuthReturn => {
     handleSignin,
     handleGoogleSignin,
     handleSignout,
-    refreshProfile
+    refreshProfile,
+    handleEditUsername,
+    handleChangePassword,
+    handleDeleteAccount
   };
 };
 
