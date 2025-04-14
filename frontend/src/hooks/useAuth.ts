@@ -20,6 +20,8 @@ interface UserProfile {
   Email: string;
   Username: string;
   Avatar: string | null;
+  AuthProvider: string | null;
+  GamesPlayed: number;
 }
 
 interface SignupData {
