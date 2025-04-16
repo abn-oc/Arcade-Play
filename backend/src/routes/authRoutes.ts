@@ -51,8 +51,8 @@ authRoutes.post("/signup", async (req: Request, res: Response): Promise<any> => 
       request.input("AuthProvider", sql.NVarChar(50), authProvider)
              .input("ProviderUserID", sql.NVarChar(255), providerUserID);
     } else {
-      request.input("AuthProvider", sql.NVarChar(50), null)
-             .input("ProviderUserID", sql.NVarChar(255), null);
+      request.input("AuthProvider", sql.NVarChar(50), "email")
+             .input("ProviderUserID", sql.NVarChar(255), email);
     }
 
     await request.query(`

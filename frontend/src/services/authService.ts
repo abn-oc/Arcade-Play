@@ -114,8 +114,6 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
       providerUserID: googleUser.sub
     });
   } catch (error) {
-    console.log('eeeeeeeeeeeeeeeeeeeeeeeeee');
-
     if (error instanceof Error) {
       if (error.message.trim() === "Invalid credentials") {
         console.log("yo inv creds");
