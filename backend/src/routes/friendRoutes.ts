@@ -81,5 +81,38 @@ friendRoutes.post('/list', async (req: Request, res: Response): Promise<any> => 
     }
 });
   
+friendRoutes.post('/remove', async (req: Request, res: Response): Promise<any> => {
+  const { userId, friendId } = req.body;
+
+  // Basic validation
+  if (!userId || !friendId || userId === friendId) {
+    return res.status(400).json({ message: 'Invalid user IDs' });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    // Check if the friendship exists
+    const check = await pool.request()
+      .input('UserID', sql.Int, userId)
+      .input('FriendID', sql.Int, friendId)
+      .query('SELECT * FROM Friends WHERE (UserID = @UserID AND FriendID = @FriendID) OR (UserID = @FriendID AND FriendID = @UserID)');
+
+    if (check.recordset.length === 0) {
+      return res.status(404).json({ message: 'Friendship not found' });
+    }
+
+    // Remove the friendship
+    await pool.request()
+      .input('UserID', sql.Int, userId)
+      .input('FriendID', sql.Int, friendId)
+      .query('DELETE FROM Friends WHERE (UserID = @UserID AND FriendID = @FriendID) OR (UserID = @FriendID AND FriendID = @UserID)');
+
+    res.status(200).json({ message: 'Friend removed successfully' });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 
 export default friendRoutes;

@@ -41,3 +41,12 @@ export async function getFriends(userId: number): Promise<Friend[]> {
     }
   }
   
+// Function to remove a friend
+export const removeFriend = async (userId: number, friendId: number) => {
+  try {
+    const res = await axios.post(`${API_URL}/remove`, { userId, friendId });
+    return res.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to remove friend');
+  }
+};

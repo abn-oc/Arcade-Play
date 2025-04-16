@@ -19,39 +19,49 @@ const io = new Server(httpServer, {
 connectDB();
 
 // socket functionality
-const onlineUsers = new Map<number, {socketID: string, userName: string}>(); // id -> socket.id, username
+let onlineUsers: {ID: number, userName: string, socketID: string}[] = [];
+
+function printOnlineUsers() {
+  console.log('----------------------------')
+  console.log('🟢 Online Users:');
+  onlineUsers.forEach(user => console.log(`- ${user.ID}. ${user.userName} -- ${user.socketID}`));
+  console.log('----------------------------')
+}
 
 io.on("connection", (socket) => {
 
   console.log("A user connected:", socket.id);
 
+  socket.on('register-user', (id, username) => {
+    if (!onlineUsers.find(user => user.ID === id)) {
+      onlineUsers.push({ ID: id, userName: username, socketID: socket.id });
+    }
+    printOnlineUsers();
+  })
+
   socket.on("globalMessage", (msg) => {
     io.emit("globalMessage", msg);
   });
 
-  socket.on('register-user', (id: number, userName: string) => {
-    onlineUsers.set(id, {socketID: socket.id, userName: userName});
+  socket.on('send-friend-request', ({ toUsername, fromUsername, fromID }) => {
+    const targetsocketID = onlineUsers.find(user => user.userName === toUsername)?.socketID;
+    if (targetsocketID) io.to(targetsocketID).emit('receive-friend-request', {fromUsername, fromID});
   });
 
-  socket.on('send-friend-request', ({ toID, fromUsername, fromID }) => {
-    const targetSocketId = onlineUsers.get(toID)?.socketID;
-    if (targetSocketId) {
-      io.to(targetSocketId).emit('receive-friend-request', { fromUsername, fromID });
-    }
+  socket.on('accept-friend-request', ({ toID, fromID }) => {
+    const targetsocketID = onlineUsers.find(user => user.ID === toID)?.socketID;
+    const fromUsername = onlineUsers.find(user => user.ID === fromID)?.userName;
+    if (targetsocketID) io.to(targetsocketID).emit('accepted-friend-request', {fromID, fromUsername});
   });
 
-  socket.on('accept-friend-request', ({ to, from }) => {
-    const requesterSocketId = onlineUsers.get(to)?.socketID;
-    if (requesterSocketId) {
-      io.to(requesterSocketId).emit('friend-request-accepted', { from });
-    }
-  });
+  socket.on('remove-friend', (fromID, toID) => {
+    const targetsocketID = onlineUsers.find(user => user.ID === toID)?.socketID;
+    if (targetsocketID) io.to(targetsocketID).emit('removed-friend', fromID);
+  })
 
   socket.on("disconnect", () => {
-    for (let [user, key] of onlineUsers.entries()) {
-        if (key.socketID === socket.id) onlineUsers.delete(user);
-    }
-    console.log("User disconnected:", socket.id);
+    onlineUsers = onlineUsers.filter(user => user.socketID !== socket.id);
+    printOnlineUsers();
   });
 });
 
