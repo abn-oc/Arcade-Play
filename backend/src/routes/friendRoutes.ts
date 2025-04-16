@@ -108,7 +108,70 @@ friendRoutes.post('/remove', async (req: Request, res: Response): Promise<any> =
       .input('FriendID', sql.Int, friendId)
       .query('DELETE FROM Friends WHERE (UserID = @UserID AND FriendID = @FriendID) OR (UserID = @FriendID AND FriendID = @UserID)');
 
-    res.status(200).json({ message: 'Friend removed successfully' });
+    // Remove private messages between the user and the friend
+    await pool.request()
+      .input('UserID', sql.Int, userId)
+      .input('FriendID', sql.Int, friendId)
+      .query('DELETE FROM PrivateMessages WHERE (SenderID = @UserID AND ReceiverID = @FriendID) OR (SenderID = @FriendID AND ReceiverID = @UserID)');
+
+    res.status(200).json({ message: 'Friend removed and messages deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+
+friendRoutes.post('/messages', async (req: Request, res: Response): Promise<any> => {
+  const { userId1, userId2 } = req.body;
+
+  if (!userId1 || !userId2 || userId1 === userId2) {
+    return res.status(400).json({ message: 'Invalid user IDs' });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    const result = await pool.request()
+      .input('User1', sql.Int, userId1)
+      .input('User2', sql.Int, userId2)
+      .query(`
+        SELECT SenderID, ReceiverID, Content
+        FROM PrivateMessages
+        WHERE 
+          (SenderID = @User1 AND ReceiverID = @User2)
+          OR 
+          (SenderID = @User2 AND ReceiverID = @User1)
+        ORDER BY SentTime ASC
+      `);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+friendRoutes.post('/add-message', async (req: Request, res: Response): Promise<any> => {
+  const { senderId, receiverId, content } = req.body;
+
+  // Basic validation
+  if (!senderId || !receiverId || !content || senderId === receiverId) {
+    return res.status(400).json({ message: 'Invalid data' });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    // Insert the new message into the PrivateMessages table
+    await pool.request()
+      .input('SenderID', sql.Int, senderId)
+      .input('ReceiverID', sql.Int, receiverId)
+      .input('Content', sql.NVarChar, content)  // Use NVarChar for text content
+      .query(`
+        INSERT INTO PrivateMessages (SenderID, ReceiverID, Content, SentTime)
+        VALUES (@SenderID, @ReceiverID, @Content, GETDATE())
+      `);
+
+    res.status(201).json({ message: 'Message sent successfully' });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }

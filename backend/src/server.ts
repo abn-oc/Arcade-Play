@@ -59,6 +59,11 @@ io.on("connection", (socket) => {
     if (targetsocketID) io.to(targetsocketID).emit('removed-friend', fromID);
   })
 
+  socket.on('send-pm', (friendID, userID, userName) => {
+    const targetsocketID = onlineUsers.find(user => user.ID === friendID)?.socketID;
+    if (targetsocketID) io.to(targetsocketID).emit('receive-pm', userID, userName);
+  })
+
   socket.on("disconnect", () => {
     onlineUsers = onlineUsers.filter(user => user.socketID !== socket.id);
     printOnlineUsers();

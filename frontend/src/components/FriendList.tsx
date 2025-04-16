@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react"
 import { userContext } from "../contexts/userContext"
 import { addFriend, getFriends, removeFriend as RemoveFriend } from "../services/friendService";
 
-export default function FriendList() {
+export default function FriendList( {selFriend} : {selFriend: any}) {
 
     const user = useContext(userContext)?.user;
     const socket = useContext(userContext)?.socket;
@@ -136,6 +136,7 @@ export default function FriendList() {
             {friendList.map((friend, index) => (
               <div 
                 key={index} 
+                onClick={() => selFriend(friend.ID, friend.userName)}
                 className="text-sm text-gray-800 py-1 px-2 rounded hover:bg-gray-100 cursor-pointer flex flex-row justify-between"
               >
                 {friend.userName}

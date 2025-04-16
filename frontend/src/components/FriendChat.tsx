@@ -1,5 +1,6 @@
-import { useContext, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
 import { userContext } from "../contexts/userContext"
+import { getPrivateMessages, sendPrivateMessage } from "../services/friendService";
 
 interface FriendChatProps {
     friend: { ID: number; userName: string } | null;
@@ -10,14 +11,41 @@ interface FriendChatProps {
 export default function FriendChat({ friend, close, closable }: FriendChatProps) {
   
     const user = useContext(userContext)?.user;
+    const socket = useContext(userContext)?.socket;
 
     const [msgs, setMsgs] = useState<{userName: string, content: string}[]>([]);
     const [msgText, setMsgText] = useState<string>('');
-    const messagesContainerRef = useRef(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    function sendMsg() {
-
+    async function sendMsg(e : any) {
+        e.preventDefault();
+        //add msg to db
+        if (user && friend)
+            await sendPrivateMessage(user?.ID, friend?.ID, msgText);
+        //emit signal
+        socket?.emit('send-pm', friend?.ID, user?.ID, user?.Username);
+        //update local array
+        if (user && friend) {
+            const msgs = await getPrivateMessages(user?.ID, friend?.ID);
+            setMsgs(msgs.map(msg => ({userName: msg.senderId == user?.ID ? user?.Username : friend.userName, content: msg.content})));
+        }
+        setMsgText('');
     }
+
+    useEffect(() => {
+        (async () => {
+            if (user && friend) {
+                const msgs = await getPrivateMessages(user?.ID, friend?.ID);
+                setMsgs(msgs.map(msg => ({userName: msg.senderId == user?.ID ? user?.Username : friend.userName, content: msg.content})));
+            }
+        })()
+    }, [friend])
+
+    useEffect(() => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    }, [msgs]);
 
     return (
         <>
