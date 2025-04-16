@@ -5,23 +5,31 @@ import gameService from '../services/gameService';
 import { io, Socket } from 'socket.io-client';
 import { addFriend } from '../services/friendService';
 import { getFriends } from '../services/friendService'; // Import the getFriends function
-
-let socket: Socket;
+import { useSocket } from '../hooks/useSocket';
 
 export default function Home() {
-    const { user, handleSignout, isLoggedIn } = useAuth();
+
+    const socket = useSocket();
+
+    const { user, isLoggedIn } = useAuth();
     const navigate = useNavigate();
+    
     const [games, setGames] = useState<any[]>([]);
     const [selectedGame, setSelectedGame] = useState<any | null>(null);
     const [gameDetails, setGameDetails] = useState<any | null>(null);
 
-    const [messages, setMessages] = useState<{ sender: string; content: string }[]>([]);
-    const [messageInput, setMessageInput] = useState('');
+    const [globalMsgs, setGlobalMsgs] = useState<{ senderUsername: string; content: string }[]>([]);
+    const [globalMsgInput, setGlobalMsgInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement | null>(null);
 
     const [usernameToAdd, setUsernameToAdd] = useState('');
-    const [incomingRequests, setIncomingRequests] = useState<{ from: string, fromID: number }[]>([]);
-    const [friends, setFriends] = useState<string[]>([]);
+    const [incomingRequests, setIncomingRequests] = useState<{ fromUsername: string, fromID: number }[]>([]);
+
+    const [friends, setFriends] = useState<{id: number, username: string}[]>([]);
+
+    const [selectedFriend, setSelectedFriend] = useState<{id: number, username: string} | null>(null);
+    const [PrivateMsgs, setPrivateMsgs] = useState<{senderUsername: string, content: string}[]>([]);
+    const [PrivateMsgInput, setPrivateMsgInput] = useState<string>('');
 
     // Fetch friend list when page loads
     useEffect(() => {
@@ -29,8 +37,7 @@ export default function Home() {
             const fetchFriendsList = async () => {
                 try {
                     const friendList = await getFriends(user.ID); // Fetch friends from the service
-                    console.log(friendList)
-                    setFriends(friendList.map(friend => friend.username)); // Assume `username` is the field returned
+                    setFriends(friendList); // Assume `username` is the field returned
                 } catch (err) {
                     console.error('Error fetching friends:', err);
                 }
@@ -39,6 +46,7 @@ export default function Home() {
         }
     }, [isLoggedIn, user]);
 
+    // Fetch games when page loads
     useEffect(() => {
         if (isLoggedIn) {
             const fetchGames = async () => {
@@ -53,45 +61,34 @@ export default function Home() {
         }
     }, [isLoggedIn]);
 
+    // if logged out, go to sign-in page
     useEffect(() => {
         if (!isLoggedIn) {
             navigate('/');
         }
     }, [isLoggedIn, navigate]);
 
+    // Socket Logic
     useEffect(() => {
         if (!isLoggedIn) return;
-
-        socket = io('http://localhost:3000'); // adjust if deployed
 
         socket.on('connect', () => {
             console.log('Connected to socket server');
         });
 
-        socket.on('globalMessage', (msg: { sender: string; content: string }) => {
-            setMessages((prev) => [...prev, msg]);
+        socket.on('globalMessage', (msg: { senderUsername: string; content: string }) => {
+            setGlobalMsgs((prev) => [...prev, msg]);
         });
 
-        socket.on('receive-friend-request', ({ from, fromID }) => {
-            console.log(`received req from ${from} id ${fromID}`);
-            setIncomingRequests((prev) => [...prev, { from, fromID }]);
+        socket.on('receive-friend-request', ({ fromUsername, fromID } : { fromUsername: string, fromID: number }) => {
+            setIncomingRequests((prev) => [...prev, { fromUsername, fromID }]);
         });
 
-        return () => {
-            socket.disconnect();
-        };
+        // return () => {
+        //     socket.disconnect();
+        // };
+
     }, [isLoggedIn]);
-
-    useEffect(() => {
-        if (user?.Username) {
-            socket.emit('register-user', user.Username);
-        }
-    }, [user]);
-
-    const handleLogout = async () => {
-        await handleSignout();
-        navigate('/');
-    };
 
     const handleGameClick = async (gameId: number) => {
         try {
@@ -103,111 +100,96 @@ export default function Home() {
         }
     };
 
-    const sendMessage = () => {
-        if (messageInput.trim()) {
+    const sendGlobalMsg = () => {
+        const trimmed = globalMsgInput.trim();
+        if (trimmed) {
             const msg = {
-                sender: user?.Username || user?.Email || 'Anonymous',
-                content: messageInput.trim()
+                sender: user?.Username,
+                content: trimmed
             };
             socket.emit('globalMessage', msg);
-            setMessageInput('');
+            setGlobalMsgInput('');
         }
     };
 
     const sendFriendRequest = () => {
-        if (!usernameToAdd.trim() || !user?.Username) return;
-        socket.emit('send-friend-request', {
-            to: usernameToAdd.trim(),
-            from: user.Username,
-            fromID: user.ID
-        });
+        const trimmed = usernameToAdd.trim();
+        if (trimmed && user) {
+            socket.emit('send-friend-request', {
+                to: trimmed,
+                from: user.Username,
+                fromID: user.ID
+            });    
+        }
         setUsernameToAdd('');
     };
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [globalMsgs]);
 
     return (
         <div className='flex min-h-screen bg-gray-50'>
-            {/* Left: Games and User Info */}
+
+            {/* Left and Center: Friends and Private Messages */}
             <div className='flex-1 flex flex-col gap-4 items-center justify-start p-6'>
-                <div className='flex flex-col gap-2 items-center'>
-                    <h2 className='text-xl font-bold'>Welcome, {user?.FirstName || user?.Username}</h2>
-                    <p>You are logged in as {user?.Email}</p>
-                    <button
-                        onClick={handleLogout}
-                        className='border rounded p-2 bg-red-500 text-white hover:bg-red-600 transition-colors'
-                    >
-                        Sign Out
-                    </button>
-                </div>
 
                 {/* Add Friend UI */}
                 <div className="mt-4 w-full max-w-xs">
-                    <h4 className="font-semibold mb-1">Add a Friend</h4>
                     <div className="flex gap-2">
-                        <input
-                            type="text"
-                            value={usernameToAdd}
-                            onChange={(e) => setUsernameToAdd(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && sendFriendRequest()}
-                            placeholder="Enter username"
-                            className="flex-1 border px-2 py-1 rounded"
-                        />
-                        <button
-                            onClick={sendFriendRequest}
-                            className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 transition-colors"
-                        >
-                            Add
-                        </button>
+                        <form onSubmit={(e) => {e.preventDefault(); sendFriendRequest()}}>
+                            <input className='border' type="text" value={usernameToAdd} onChange={e => setUsernameToAdd(e.target.value)} placeholder='username-to-add'/>
+                        </form>
                     </div>
                 </div>
 
                 {/* Incoming Requests */}
-                {incomingRequests.length > 0 && (
                     <div className="mt-4 w-full max-w-xs bg-yellow-100 border border-yellow-400 p-2 rounded">
                         <h4 className="font-semibold text-yellow-800 mb-2">Friend Requests</h4>
                         <ul className="space-y-2">
                             {incomingRequests.map((req, index) => (
                                 <li key={index} className="flex justify-between items-center bg-white p-2 rounded">
-                                    <span>{req.from}</span>
+                                    <span>{req.fromUsername}</span>
                                     <button
                                         className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
                                         onClick={() => {
-                                            console.log(`Friend accepted: Add ${req.from} to your friends list here.`);
-                                            setFriends(prev => [...prev, req.from]);
-                                            setIncomingRequests(prev => prev.filter(name => name.from !== req.from));
+                                            //add friend to local array of friends
+                                            setFriends(prev => [...prev, {id: req.fromID, username: req.fromUsername}]);
+                                            //remove from local array of requests
+                                            setIncomingRequests(prev => prev.filter(a => a.fromID !== req.fromID));
+                                            //add friendship record to database
                                             if (user) addFriend(user.ID, req.fromID);
                                         }}
                                     >
                                         Accept
                                     </button>
+                                    <button
+                                        className="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+                                        onClick={() => {
+                                            //remove from local array of requests
+                                            setIncomingRequests(prev => prev.filter(a => a.fromID !== req.fromID));
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
                                 </li>
                             ))}
                         </ul>
                     </div>
-                )}
 
                 {/* Friend List */}
-                {friends.length >= 0 && (
                     <div className="mt-4 w-full max-w-xs bg-green-100 border border-green-400 p-2 rounded">
                         <h4 className="font-semibold text-green-800 mb-2">Friends</h4>
                         <ul className="space-y-1">
-                            {friends.map((name, idx) => (
-                                <li key={idx} className="bg-white px-2 py-1 rounded">{name}</li>
+                            {friends.map((friend, idx) => (
+                                <li key={idx} className="bg-white px-2 py-1 rounded">{friend.username}</li>
                             ))}
                         </ul>
                     </div>
-                )}
-
-                {/* Profile */}
-                <button onClick={() => navigate('/profile')}>profile</button>
 
                 {/* Display Games */}
                 <div className="mt-6 flex flex-wrap gap-4 justify-center">
-                    {games.length > 0 ? (
-                        games.map(game => (
+                    {games.map(game => (
                             <div
                                 key={game.GameID}
                                 className="flex flex-col items-center cursor-pointer"
@@ -216,10 +198,7 @@ export default function Home() {
                                 <img src={`/assets/${game.Icon}.png`} alt={game.name} className="w-24 h-24 object-cover" />
                                 <p className="mt-2">game name: {game.GameName}</p>
                             </div>
-                        ))
-                    ) : (
-                        <p>No games available</p>
-                    )}
+                    ))}
                 </div>
 
                 {/* Display Selected Game Details */}
@@ -237,28 +216,17 @@ export default function Home() {
             <div className="w-full md:w-[400px] border-l border-gray-300 flex flex-col p-4 bg-white shadow-md">
                 <h3 className="text-xl font-bold mb-2">🌍 Global Chat</h3>
                 <div className="flex-1 overflow-y-auto mb-2 space-y-2 pr-1">
-                    {messages.map((msg, index) => (
+                    {globalMsgs.map((msg, index) => (
                         <div key={index} className="bg-gray-100 p-2 rounded">
-                            <strong>{msg.sender}</strong>: {msg.content}
+                            <strong>{msg.senderUsername}</strong>: {msg.content}
                         </div>
                     ))}
                     <div ref={chatEndRef} />
                 </div>
                 <div className="flex gap-2 mt-2">
-                    <input
-                        type="text"
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        placeholder="Type a message..."
-                        className="flex-1 border px-2 py-1 rounded"
-                    />
-                    <button
-                        onClick={sendMessage}
-                        className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
-                    >
-                        Send
-                    </button>
+                    <form onSubmit={sendGlobalMsg}>
+                        <input className='border' type="text" value={globalMsgInput} onChange={e => setGlobalMsgInput(e.target.value)} placeholder='send a global message'/>
+                    </form>
                 </div>
             </div>
         </div>

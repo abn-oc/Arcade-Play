@@ -16,6 +16,7 @@ export default function Landing() {
     const [signupPassword, setSignupPassword] = useState('');
     const [username, setUsername] = useState('');
 
+
     const { 
         user, 
         loading, 

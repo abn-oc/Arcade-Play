@@ -11,7 +11,6 @@ const Profile = () => {
     error,
     handleEditUsername,
     handleChangePassword,
-    refreshProfile
   } = useAuth();
 
   const [newUsername, setNewUsername] = useState('');

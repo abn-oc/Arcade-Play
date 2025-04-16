@@ -1,5 +1,5 @@
 // src/hooks/useAuth.ts
-
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import {
   signin,
@@ -145,6 +145,7 @@ export const useAuth = (): UseAuthReturn => {
     signout();
     setUser(null);
     setIsLoggedIn(false);
+    const navigate = useNavigate();
   };
 
   // ✅ New Functions for Profile Page

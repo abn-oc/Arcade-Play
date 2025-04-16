@@ -5,53 +5,51 @@ import { Server } from "socket.io";
 
 const port = 3000;
 
-// Create HTTP server with Express app
+// create http server with express app
 const httpServer = createServer(app);
 
-// Create Socket.IO server
+// create socket.io server
 const io = new Server(httpServer, {
   cors: {
     origin: "*", // adjust this if needed for security
   },
 });
 
-// DB connection
+// db connection
 connectDB();
 
-// Socket.IO logic
-const onlineUsers = new Map<string, string>(); // username -> socket.id
+// socket functionality
+const onlineUsers = new Map<number, {socketID: string, userName: string}>(); // id -> socket.id, username
 
 io.on("connection", (socket) => {
+
   console.log("A user connected:", socket.id);
 
-  // Example: handle a global message event
-  socket.on("globalMessage", (data) => {
-    console.log("Global message received:", data);
-    // Broadcast to all clients (including sender)
-    io.emit("globalMessage", data);
+  socket.on("globalMessage", (msg) => {
+    io.emit("globalMessage", msg);
   });
 
-  socket.on('register-user', (username: string) => {
-    onlineUsers.set(username, socket.id);
+  socket.on('register-user', (id: number, userName: string) => {
+    onlineUsers.set(id, {socketID: socket.id, userName: userName});
   });
 
-  socket.on('send-friend-request', ({ to, from, fromID }) => {
-    const targetSocketId = onlineUsers.get(to);
+  socket.on('send-friend-request', ({ toID, fromUsername, fromID }) => {
+    const targetSocketId = onlineUsers.get(toID)?.socketID;
     if (targetSocketId) {
-      io.to(targetSocketId).emit('receive-friend-request', { from, fromID });
+      io.to(targetSocketId).emit('receive-friend-request', { fromUsername, fromID });
     }
   });
 
   socket.on('accept-friend-request', ({ to, from }) => {
-    const requesterSocketId = onlineUsers.get(to);
+    const requesterSocketId = onlineUsers.get(to)?.socketID;
     if (requesterSocketId) {
       io.to(requesterSocketId).emit('friend-request-accepted', { from });
     }
   });
 
   socket.on("disconnect", () => {
-    for (let [user, id] of onlineUsers.entries()) {
-        if (id === socket.id) onlineUsers.delete(user);
+    for (let [user, key] of onlineUsers.entries()) {
+        if (key.socketID === socket.id) onlineUsers.delete(user);
     }
     console.log("User disconnected:", socket.id);
   });
