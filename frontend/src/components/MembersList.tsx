@@ -1,25 +1,47 @@
-import { useRef } from "react";
+import { useEffect, useState } from "react";
+import { getUserScore } from "../services/leaderboardService";
 
-export default function MembersList( { members } : { members: {ID: number, userName: string}[]} ) {
+export default function MembersList({
+  members,
+}: {
+  members: { ID: number; userName: string }[];
+}) {
+  const [scoreList, setScoreList] = useState<{Score: number}[]>([]);
 
-    const ContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    async function fetchScores() {
+        console.log("gonna fetch scores of members")
+      const scores = await Promise.all(
+        members.map((member) => getUserScore(member.ID, 1))
+      );
+      console.log(scores)
+      setScoreList(scores);
+    }
 
-    return (
-        <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
+    if (members.length > 0) fetchScores();
+  }, [members]);
+
+  return (
+    <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="bg-blue-900 text-white p-3 font-medium flex items-center">
         <span className="text-lg">Room Members</span>
         <span className="ml-2 text-xl">🎮</span>
       </div>
-      
-      {/* Messages container */}
-      <div className="p-3 max-h-39 overflow-y-auto bg-gray-50" ref={ContainerRef}>
+
+      {/* Members container */}
+      <div className="p-3 max-h-39 overflow-y-auto bg-gray-50">
         {members.map((member, index) => (
-          <div key={index} className="mb-2 last:mb-0">
-            <span className="font-semibold text-blue-700">{member.userName}:</span>
+          <div key={member.ID} className="mb-2 last:mb-0">
+            <span className="font-semibold text-blue-700">
+              {member.userName} —{" "}
+              <span className="text-gray-800">
+                {scoreList[index] !== undefined ? scoreList[index].Score : "Loading..."}
+              </span>
+            </span>
           </div>
         ))}
       </div>
     </div>
-    )
+  );
 }

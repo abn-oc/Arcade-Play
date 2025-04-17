@@ -5,6 +5,7 @@ import FriendList from "../components/FriendList";
 import FriendChat from "../components/FriendChat";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MembersList from "../components/MembersList";
+import { getUserScore, updateUserScore } from "../services/leaderboardService";
 
 export default function TicTacToe() {
 
@@ -52,7 +53,7 @@ export default function TicTacToe() {
   }, [socket]);
 
   useEffect(() => {
-    function codeSet(code: string) {
+    async function codeSet(code: string) {
       setCode(code);
     //   localStorage.setItem("tictactoe-room-code", code);
       if (user) setRoomMembers([{ ID: user.ID, userName: user.Username }]);
@@ -62,7 +63,7 @@ export default function TicTacToe() {
       setResult(null);
     }
 
-    function updateGame(
+    async function updateGame(
       newTable: string[],
       p1ID: number | null,
       p1userName: string | null,
@@ -83,8 +84,13 @@ export default function TicTacToe() {
       console.log(members);
     }
 
-    function handleWin() {
+    async function handleWin() {
       setResult("win");
+      if (user) {
+          let x: number = (await getUserScore(user.ID, 1)).Score;
+          x = x + 10;
+          await updateUserScore(user.ID, 1, x);
+      }
     }
 
     function handleLose() {
@@ -163,8 +169,8 @@ export default function TicTacToe() {
         Turn: {turn % 2 === 0 ? roomMembers[0]?.userName : roomMembers[1]?.userName}
       </p>
 
-      {result === "win" && <p className="text-green-600 font-bold">🎉 You won!</p>}
-      {result === "lose" && <p className="text-red-600 font-bold">😢 You lost!</p>}
+      {result === "win" && <p className="text-green-600 font-bold">🎉 You won! Score + 10</p>}
+      {result === "lose" && <p className="text-red-600 font-bold">😢 You lost! Score + 0</p>}
 
       <button onClick={leaveRoom} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
         Leave Room
