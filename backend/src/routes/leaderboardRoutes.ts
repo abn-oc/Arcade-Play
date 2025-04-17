@@ -4,6 +4,29 @@ import { connectDB } from '../config/db';
 
 const leaderboardRoutes = express.Router();
 
+// Get leaderboard for a specific game (high to low)
+leaderboardRoutes.get('/gameleaderboard/:gameId', async (req: Request, res: Response): Promise<any> => {
+    const { gameId } = req.params;
+  
+    try {
+      const pool = await connectDB(); // Ensure the connection is established
+      const result = await pool.request()
+        .input('GameID', sql.Int, gameId)
+        .query(`
+          SELECT u.Username, l.Score
+          FROM LeaderBoard l
+          JOIN Users u ON l.UserID = u.ID
+          WHERE l.GameID = @GameID
+          ORDER BY l.Score DESC
+        `);
+          console.log(result.recordset);
+      return res.json(result.recordset);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // Get score of a user in a specific game
 leaderboardRoutes.get('/:userId/:gameId', async (req: Request, res: Response): Promise<any> => {
   const { userId, gameId } = req.params;
@@ -47,29 +70,6 @@ leaderboardRoutes.post('/', async (req: Request, res: Response) => {
       `);
 
     res.json({ message: 'Score updated or inserted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
-
-// Get leaderboard for a specific game (high to low)
-leaderboardRoutes.get('/game/:gameId', async (req: Request, res: Response) => {
-  const { gameId } = req.params;
-
-  try {
-    const pool = await connectDB(); // Ensure the connection is established
-    const result = await pool.request()
-      .input('GameID', sql.Int, gameId)
-      .query(`
-        SELECT u.Username, l.Score
-        FROM LeaderBoard l
-        JOIN Users u ON l.UserID = u.ID
-        WHERE l.GameID = @GameID
-        ORDER BY l.Score DESC
-      `);
-
-    res.json(result.recordset);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });

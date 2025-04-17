@@ -26,7 +26,7 @@ export async function updateUserScore(userId: number, gameId: number, score: num
 }
 
 export async function getGameLeaderboard(gameId: number) {
-  const res = await fetch(`${API_BASE}/game/${gameId}`);
+  const res = await fetch(`${API_BASE}/gameleaderboard/${gameId}`);
 
   if (!res.ok) {
     throw new Error('Failed to fetch leaderboard');
