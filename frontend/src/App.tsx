@@ -5,6 +5,7 @@ import { useContext, useEffect } from 'react';
 import { userContext } from './contexts/userContext';
 import { getProfile, signout } from './services/authService';
 import Home from './pages/Home';
+import TicTacToe from './pages/TicTacToe';
 
 export default function App() {
 
@@ -55,6 +56,7 @@ export default function App() {
         <Routes>
           <Route path='/' element={Landing()}/>
           <Route path='/home' element={Home()}/>
+          <Route path='/tictactoe' element={TicTacToe()}/>
         </Routes>
 
       </div>

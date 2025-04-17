@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getGameDetails } from "../services/gameService";
+import { useNavigate } from "react-router-dom";
 
 interface GameDetailsProps {
   id: number;
@@ -18,6 +19,7 @@ export default function GameDetails({ id }: GameDetailsProps) {
   const [game, setGame] = useState<GameDetails | null>(null);
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -39,12 +41,10 @@ export default function GameDetails({ id }: GameDetailsProps) {
   };
 
   const handleCreateRoom = () => {
-    console.log("Creating room...");
-    // Add logic for room creation
+    navigate('/tictactoe');
   };
 
   const handleJoinRoom = () => {
-    console.log("Joining room with code:", roomCode);
     // Add logic for joining room
   };
 
@@ -56,7 +56,7 @@ export default function GameDetails({ id }: GameDetailsProps) {
     <div className="max-w-sm mx-auto p-2 border rounded shadow-lg">
       {game ? (
         <>
-          <h2 className="text-xl font-bold">{game.GameName}</h2>
+          <h2 className="text-xl font-bold">{game.GameName}</h2> 
           <img
             src={`/assets/${game.Icon}.png`}
             alt={game.GameName}
