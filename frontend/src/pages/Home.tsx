@@ -24,6 +24,7 @@ export default function Home() {
     useEffect(() => {
         if (user && socket) {
           socket.emit("register-user", user.ID, user.Username);
+          socket.emit('reconnect-room', user.ID);
         }
     }, [user, socket]);
 

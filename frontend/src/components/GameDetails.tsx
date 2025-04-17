@@ -41,11 +41,17 @@ export default function GameDetails({ id }: GameDetailsProps) {
   };
 
   const handleCreateRoom = () => {
-    navigate('/tictactoe');
+    if(game?.GameID == 1)
+        setRoomCode('')
+        navigate('/tictactoe');
   };
 
   const handleJoinRoom = () => {
-    // Add logic for joining room
+      if(game?.GameID == 1) {
+        setRoomCode('')
+        localStorage.setItem('tictactoe-room-code', roomCode);
+        navigate('/tictactoe');
+      }
   };
 
   if (loading) {
