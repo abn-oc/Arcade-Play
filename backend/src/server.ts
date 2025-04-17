@@ -207,6 +207,46 @@ io.on("connection", (socket) => {
   }
 );
 
+socket.on("request-update", (userID) => {
+  const room = TicTacToeRooms.find(
+    (room) => room.player1ID === userID || room.player2ID === userID
+  );
+
+  if (room) {
+    const p1userName = onlineUsers.find(user => user.ID === room.player1ID)?.userName;
+    const p2userName = onlineUsers.find(user => user.ID === room.player2ID)?.userName;
+
+    // Emit to the requesting user
+    io.to(socket.id).emit(
+      "room-update",
+      room.gameTable,
+      room.player1ID,
+      p1userName,
+      room.player2ID,
+      p2userName,
+      room.turn
+    );
+
+    // Find and emit to the other player
+    const otherUserID = userID === room.player1ID ? room.player2ID : room.player1ID;
+    const otherSocketID = onlineUsers.find(user => user.ID === otherUserID)?.socketID;
+
+    if (otherSocketID) {
+      io.to(otherSocketID).emit(
+        "room-update",
+        room.gameTable,
+        room.player1ID,
+        p1userName,
+        room.player2ID,
+        p2userName,
+        room.turn
+      );
+    }
+  }
+});
+
+
+
   socket.on("disconnect", () => {
     onlineUsers = onlineUsers.filter(user => user.socketID !== socket.id);
     printOnlineUsers();

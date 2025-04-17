@@ -3,10 +3,14 @@ import { userContext } from "../contexts/userContext";
 import GlobalChat from "../components/GlobalChat";
 import FriendList from "../components/FriendList";
 import FriendChat from "../components/FriendChat";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import MembersList from "../components/MembersList";
 
 export default function TicTacToe() {
+
+  const [searchParams] = useSearchParams();
+  const roomCodeFromURL = searchParams.get("code");
+
   const navigate = useNavigate();
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
@@ -22,7 +26,7 @@ export default function TicTacToe() {
 
   function leaveRoom() {
     // setShouldCreateRoom(true);
-    localStorage.removeItem("tictactoe-room-code");
+    // localStorage.removeItem("tictactoe-room-code");
     setCode("Loading...");
     setTable(Array(9).fill(''));
     setTurn(0);
@@ -50,7 +54,7 @@ export default function TicTacToe() {
   useEffect(() => {
     function codeSet(code: string) {
       setCode(code);
-      localStorage.setItem("tictactoe-room-code", code);
+    //   localStorage.setItem("tictactoe-room-code", code);
       if (user) setRoomMembers([{ ID: user.ID, userName: user.Username }]);
       setTurn(0);
       setWaiting(true);
@@ -99,12 +103,25 @@ export default function TicTacToe() {
     socket?.on("tictactoe-lose", handleLose);
     socket?.on("invalid-code", invalidCode);
 
-    const localCode = localStorage.getItem("tictactoe-room-code");
-    if (localCode /*&& !shouldCreateRoom */) {
-        socket?.emit("join-room-tictactoe", localCode, user?.ID);
-        setCode(localCode);
-    } else if (!localCode /* && shouldCreateRoom */) {
-      socket?.emit("create-room-tictactoe", user?.ID);
+    // old logic using localStorage
+    // const localCode = localStorage.getItem("tictactoe-room-code");
+    // if (localCode) { ... }
+
+    // if (navState?.mode === "join" && navState.code) {
+    // setCode(navState.code);
+    // socket?.emit("join-room-tictactoe", navState.code, user.ID);
+    // } else if (navState?.mode === "create") {
+    // socket?.emit("create-room-tictactoe", user.ID);
+    // }
+
+    if (roomCodeFromURL !== "0") {
+        if (roomCodeFromURL) {
+            setCode(roomCodeFromURL);
+            socket.emit("join-room-tictactoe", roomCodeFromURL, user.ID);
+            socket.emit("request-update", user.ID);
+        }
+    } else if (roomCodeFromURL === "0"){
+        socket.emit("create-room-tictactoe", user.ID);
     }
 
     return () => {

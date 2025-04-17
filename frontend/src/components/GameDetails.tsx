@@ -40,19 +40,19 @@ export default function GameDetails({ id }: GameDetailsProps) {
     setRoomCode(event.target.value);
   };
 
-  const handleCreateRoom = () => {
-    if(game?.GameID == 1)
-        setRoomCode('')
-        navigate('/tictactoe');
-  };
-
   const handleJoinRoom = () => {
-      if(game?.GameID == 1) {
-        setRoomCode('')
-        localStorage.setItem('tictactoe-room-code', roomCode);
-        navigate('/tictactoe');
-      }
+    if (game?.GameID === 1 && roomCode) {
+      navigate(`/tictactoe?code=${roomCode}`);
+    }
   };
+  
+  const handleCreateRoom = () => {
+    if (game?.GameID === 1) {
+      navigate("/tictactoe?code=0");
+    }
+  };
+  
+  
 
   if (loading) {
     return <p>Loading...</p>;
