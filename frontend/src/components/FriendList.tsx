@@ -1,8 +1,11 @@
 import { useContext, useEffect, useState } from "react"
 import { userContext } from "../contexts/userContext"
-import { addFriend, getFriends, removeFriend as RemoveFriend } from "../services/friendService";
+import { addFriend, getFriends, getProfileID, removeFriend as RemoveFriend } from "../services/friendService";
+import { useNavigate } from "react-router-dom";
 
 export default function FriendList( {selFriend} : {selFriend: any}) {
+
+    const navigate = useNavigate();
 
     const user = useContext(userContext)?.user;
     const socket = useContext(userContext)?.socket;
@@ -43,6 +46,12 @@ export default function FriendList( {selFriend} : {selFriend: any}) {
         const newFriendsList = friendList.filter(friend => friend.ID !== id);
         setFriendList(newFriendsList);
         socket?.emit('remove-friend', user?.ID, id);
+    }
+
+    async function gotoProfile(id: number) {
+      console.log(id);
+      const Id : number = (await getProfileID(id)).ID;
+      navigate(`/profile/${Id}`);
     }
 
     // load friends on startup
@@ -86,7 +95,6 @@ export default function FriendList( {selFriend} : {selFriend: any}) {
           socket?.off('removed-friend', RemovedFriend);
         };
       }, [socket]);
-      
 
       return (
 
@@ -140,6 +148,7 @@ export default function FriendList( {selFriend} : {selFriend: any}) {
                 className="text-sm text-gray-800 py-1 px-2 rounded hover:bg-gray-100 cursor-pointer flex flex-row justify-between"
               >
                 {friend.userName}
+                <button className="text-green-500 hover:text-green-700 text-md hover:font-bold cursor-pointer" onClick={() => gotoProfile(friend.ID)}> profile </button>
                 <button className="text-red-500 hover:text-red-700 text-md hover:font-bold cursor-pointer" onClick={() => removeFriend(friend.ID)}> unfriend </button>
               </div>
             ))}

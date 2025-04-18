@@ -95,3 +95,26 @@ export const sendPrivateMessage = async (senderId: number, receiverId: number, c
     throw new Error(error.response?.data?.message || 'Failed to send message');
   }
 };
+
+interface UserProfile {
+  ID: number;
+  FirstName: string;
+  LastName: string;
+  Email: string;
+  Username: string;
+  Avatar: string | null;
+  AuthProvider: string | null;
+  GamesPlayed: number
+}
+
+export const getProfileID = async (id: number): Promise<UserProfile> => {
+  try {
+    const response = await axios.get<UserProfile>(`${API_URL}/profile/${id}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.error || 'Failed to fetch profile');
+    }
+    throw new Error('Network error, please try again');
+  }
+};

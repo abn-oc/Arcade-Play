@@ -7,6 +7,7 @@ import { getProfile, signout } from './services/authService';
 import Home from './pages/Home';
 import TicTacToe from './pages/TicTacToe';
 import Profile from './pages/Profile';
+import ProfileID from './pages/ProfileID';
 
 export default function App() {
 
@@ -60,6 +61,7 @@ export default function App() {
           <Route path='/' element={Landing()}/>
           <Route path='/home' element={Home()}/>
           <Route path='/profile' element={Profile()}/>
+          <Route path='/profile/:id' element={<ProfileID/>}/>
           <Route path='/tictactoe' element={TicTacToe()}/>
         </Routes>
 

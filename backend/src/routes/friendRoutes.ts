@@ -182,5 +182,27 @@ friendRoutes.post('/add-message', async (req: Request, res: Response): Promise<a
   }
 });
 
+friendRoutes.get("/profile/:id", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId : number = parseInt(req.params.id, 10);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+    console.log( "yo duzz: " + userId );
+    const pool = await connectDB();
+    const user = await pool.request()
+      .input("ID", sql.Int, userId)
+      .query("SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed FROM Users WHERE ID = @ID");
+    
+    if (user.recordset.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    return res.json(user.recordset[0]);
+  } catch (err) {
+    console.error("Profile error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default friendRoutes;
