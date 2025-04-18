@@ -111,7 +111,7 @@ export default function GameDetails({ id }: GameDetailsProps) {
       <h3 className="text-lg font-semibold">Leaderboard</h3>
       <ul className="mt-2 space-y-2">
           {leaderBoard.map((entry, index) => (
-          <li key={index} className="flex justify-between p-2 border-b border-gray-300 rounded">
+          <li key={index} className="flex justify-between p-2 gap-8 border-b border-gray-300 rounded">
               <span className="font-medium">{entry.Username}</span>
               <span className="text-gray-600">{entry.Score}</span>
           </li>

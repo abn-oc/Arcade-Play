@@ -10,6 +10,16 @@ import { incrementGamesPlayed } from "../services/authService";
 
 export default function TicTacToe() {
 
+  useEffect(() => {
+    // Check if the page has already been reloaded
+    if (!sessionStorage.getItem('pageReloaded')) {
+      // Set flag to prevent future reloads
+      sessionStorage.setItem('pageReloaded', 'true');
+      
+      // Reload the page
+      window.location.reload();
+    }
+  }, []);
   const [searchParams] = useSearchParams();
   const roomCodeFromURL = searchParams.get("code");
 
