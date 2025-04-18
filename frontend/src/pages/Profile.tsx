@@ -6,14 +6,16 @@ import {
   editUsername,
   getProfile,
   deleteAccount,
+  editBio, // Add this function from your authService
 } from "../services/authService";
-import { topThreeinGame } from "../services/leaderboardService"; // adjust path if needed
+import { topThreeinGame } from "../services/leaderboardService";
 
 export default function Profile() {
   const [profile, setProfile] = useState<null | any>(null);
   const [newUsername, setNewUsername] = useState("");
   const [originalPassword, setOriginalPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newBio, setNewBio] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [topThreeGames, setTopThreeGames] = useState<string[]>([]);
@@ -27,11 +29,11 @@ export default function Profile() {
       const data = await getProfile();
       setProfile(data);
       setNewUsername(data.Username);
+      setNewBio(data.Bio || ""); // Assuming the bio is in the profile data
 
       // Fetch top 3 games for badge
       const topGames = await topThreeinGame(data.ID);
       setTopThreeGames(topGames);
-      console.log(topGames);
     } catch (err) {
       setMessage((err as Error).message);
     }
@@ -57,6 +59,19 @@ export default function Profile() {
       setMessage("Password changed successfully!");
       setOriginalPassword("");
       setNewPassword("");
+    } catch (err) {
+      setMessage((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBioChange = async () => {
+    try {
+      setLoading(true);
+      await editBio(newBio);
+      setMessage("Bio updated!");
+      loadProfile();
     } catch (err) {
       setMessage((err as Error).message);
     } finally {
@@ -105,6 +120,7 @@ export default function Profile() {
       <p><strong>Last Name:</strong> {profile.LastName}</p>
       <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>
       <p><strong>Auth Provider:</strong> {profile.AuthProvider || "email"}</p>
+      <p><strong>Bio:</strong> {profile.Bio || "No bio available"}</p>
 
       <hr />
 
@@ -141,6 +157,18 @@ export default function Profile() {
           </button>
         </>
       )}
+
+      <hr />
+      <h3>Edit Bio</h3>
+      <textarea
+        value={newBio}
+        onChange={(e) => setNewBio(e.target.value)}
+        rows={4}
+        style={{ width: "100%" }}
+      />
+      <button onClick={handleBioChange} disabled={loading}>
+        Update Bio
+      </button>
 
       <hr />
       <button onClick={handleDelete} style={{ color: "red" }}>

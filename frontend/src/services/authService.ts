@@ -28,6 +28,7 @@ interface SigninData {
 }
 
 interface UserProfile {
+  Bio: string;
   ID: number;
   FirstName: string;
   LastName: string;
@@ -249,6 +250,26 @@ export const incrementGamesPlayed = async (): Promise<void> => {
     throw new Error('Failed to increment GamesPlayed');
   }
 };
+
+// Edit bio
+export const editBio = async (newBio: string): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  try {
+    await axios.patch(`${API_URL}/edit-bio`, { newBio }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data.error || 'Failed to update bio');
+    }
+    throw new Error('Network error, please try again');
+  }
+};
+
 
 export default {
   signup,

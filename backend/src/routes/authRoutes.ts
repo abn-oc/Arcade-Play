@@ -147,7 +147,7 @@ authRoutes.get("/profile", authenticateToken, async (req: Request, res: Response
     const pool = await connectDB();
     const user = await pool.request()
       .input("ID", sql.Int, userId)
-      .query("SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed FROM Users WHERE ID = @ID");
+      .query("SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed, Bio FROM Users WHERE ID = @ID");
     
     if (user.recordset.length === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -276,6 +276,40 @@ authRoutes.post("/increase-games-played", authenticateToken, async (req: Request
     res.json({ message: "GamesPlayed incremented successfully" });
   } catch (err) {
     console.error("Increase GamesPlayed error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Edit Bio
+authRoutes.patch("/edit-bio", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  const { newBio } = req.body;
+  if (!newBio) {
+    return res.status(400).json({ error: "New bio is required" });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    // Check if the user's account is deleted
+    const userQuery = await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .query("SELECT IsDeleted FROM Users WHERE ID = @ID");
+
+    const user = userQuery.recordset[0];
+
+    if (user.IsDeleted === 1) {
+      return res.status(400).json({ error: "User account is deleted, cannot update bio" });
+    }
+
+    // Update bio if account is not deleted
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .input("Bio", sql.NVarChar(500), newBio)  // Assuming 500 characters as a limit for the bio
+      .query("UPDATE Users SET Bio = @Bio WHERE ID = @ID");
+
+    res.json({ message: "Bio updated successfully" });
+  } catch (err) {
+    console.error("Edit bio error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });

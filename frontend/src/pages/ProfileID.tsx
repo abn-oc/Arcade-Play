@@ -69,6 +69,7 @@ export default function ProfileID() {
       <p><strong>Last Name:</strong> {profile.LastName}</p>
       <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>
       <p><strong>Auth Provider:</strong> {profile.AuthProvider || "email"}</p>
+      <p><strong>Bio:</strong> {profile.Bio || "No bio available"}</p>
       <hr />
 
       

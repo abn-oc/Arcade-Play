@@ -192,7 +192,7 @@ friendRoutes.get("/profile/:id", async (req: Request, res: Response): Promise<an
     const pool = await connectDB();
     const user = await pool.request()
       .input("ID", sql.Int, userId)
-      .query("SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed FROM Users WHERE ID = @ID");
+      .query("SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed, Bio FROM Users WHERE ID = @ID");
     
     if (user.recordset.length === 0) {
       return res.status(404).json({ error: "User not found" });
