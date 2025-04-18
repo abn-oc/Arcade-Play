@@ -11,17 +11,6 @@ import { topThreeinGame } from "../services/leaderboardService";
 
 export default function Profile() {
 
-  useEffect(() => {
-    // Check if the page has already been reloaded
-    if (!sessionStorage.getItem('pageReloaded')) {
-      // Set flag to prevent future reloads
-      sessionStorage.setItem('pageReloaded', 'true');
-      
-      // Reload the page
-      window.location.reload();
-    }
-  }, []);
-
   const [profile, setProfile] = useState<null | any>(null);
   const [newUsername, setNewUsername] = useState("");
   const [originalPassword, setOriginalPassword] = useState("");

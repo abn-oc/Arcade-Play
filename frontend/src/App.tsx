@@ -45,6 +45,7 @@ export default function App() {
         <div className='h-fit py-1 bg-gray-200 flex flex-row gap-4'>
           {user ? (
             <>
+              <img src={`assets/avatars/${user.Avatar}.jpg`} className='w-16 rounded-full ml-4' />
               <h4>Signed in as {user.Username}, Email: {user.Email}</h4>
               <button className='border m-1 p-1' onClick={() => navigate('/home')}>home</button>
               <button className='border m-1 p-1' onClick={() => navigate('/profile')}>profile</button>
