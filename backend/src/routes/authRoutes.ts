@@ -60,6 +60,8 @@ authRoutes.post("/signup", async (req: Request, res: Response): Promise<any> => 
       VALUES (@FirstName, @LastName, @Email, @Passwords, @Username, @AuthProvider, @ProviderUserID)
     `);
 
+    //query to insert into leaderboard for all games that this user has 0 score
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     console.error("Signup error:", err);

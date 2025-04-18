@@ -39,7 +39,7 @@ leaderboardRoutes.get('/:userId/:gameId', async (req: Request, res: Response): P
       .query('SELECT Score FROM LeaderBoard WHERE UserID = @UserID AND GameID = @GameID');
 
     if (result.recordset.length === 0) {
-      return res.status(404).json({ message: 'Score not found' });
+      return res.json( { Score: 0} );
     }
 
     return res.json(result.recordset[0]);

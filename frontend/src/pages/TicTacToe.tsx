@@ -23,7 +23,7 @@ export default function TicTacToe() {
   const [code, setCode] = useState<string>("Loading...");
   const [waiting, setWaiting] = useState<boolean>(true);
 //   const [shouldCreateRoom, setShouldCreateRoom] = useState<boolean>(false);
-  const [result, setResult] = useState<"win" | "lose" | null>(null);
+  const [result, setResult] = useState<"win" | "lose" | "loading" | null>(null);
 
   function leaveRoom() {
     // setShouldCreateRoom(true);
@@ -85,16 +85,27 @@ export default function TicTacToe() {
     }
 
     async function handleWin() {
-      setResult("win");
+      setResult("loading");
       if (user) {
-          let x: number = (await getUserScore(user.ID, 1)).Score;
-          x = x + 10;
-          await updateUserScore(user.ID, 1, x);
+        let x: number = (await getUserScore(user.ID, 1)).Score;
+        x = x + 10;
+        await updateUserScore(user.ID, 1, x);
       }
+      setResult("win");
+      setRoomMembers(a => [...a]);
     }
 
-    function handleLose() {
+    async function handleLose() {
+      setResult("loading");
+      if (user) {
+        let x: number = (await getUserScore(user.ID, 1)).Score;
+        x = x - 5;
+        if (x < 0) x = 0;
+        await updateUserScore(user.ID, 1, x);
+      }
       setResult("lose");
+      setRoomMembers(a => [...a]);
+
     }
 
     function invalidCode() {
@@ -170,7 +181,8 @@ export default function TicTacToe() {
       </p>
 
       {result === "win" && <p className="text-green-600 font-bold">🎉 You won! Score + 10</p>}
-      {result === "lose" && <p className="text-red-600 font-bold">😢 You lost! Score + 0</p>}
+      {result === "lose" && <p className="text-red-600 font-bold">😢 You lost! Score - 5</p>}
+      {result === "loading" && <p className="text-black-600 font-bold"> Checking Game...</p>}
 
       <button onClick={leaveRoom} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
         Leave Room
