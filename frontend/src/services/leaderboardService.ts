@@ -1,3 +1,5 @@
+import { getAllGames } from './gameService'; // adjust path as needed
+
 const API_BASE = 'http://localhost:3000/leaderboard'; // Update if your backend prefix is different
 
 export async function getUserScore(userId: number, gameId: number) {
@@ -33,4 +35,30 @@ export async function getGameLeaderboard(gameId: number) {
   }
 
   return await res.json(); // returns array of { Username, Score }
+}
+
+export async function topThreeinGame(userID: number): Promise<string[]> {
+  const result: string[] = [];
+
+  try {
+    const games = await getAllGames(); // Fetch all games
+    console.log(games);
+    for (const game of games) {
+      const leaderboard = await getGameLeaderboard(game.GameID); // Fetch leaderboard for each game
+
+      console.log(leaderboard + "pmo2");
+      const topThree = leaderboard.slice(0, 3); // Take top 3
+      console.log(topThree)
+      const isUserInTopThree = topThree.some((entry : any) => entry.ID === userID);
+
+      if (isUserInTopThree) {
+        result.push(game.GameName); // Include game name if user is in top 3
+      }
+    }
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error('Error in topThreeinGame:', error);
+    throw new Error('Failed to check top 3 positions');
+  }
 }

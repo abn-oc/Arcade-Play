@@ -7,6 +7,7 @@ import {
   getProfile,
   deleteAccount,
 } from "../services/authService";
+import { topThreeinGame } from "../services/leaderboardService"; // adjust path if needed
 
 export default function Profile() {
   const [profile, setProfile] = useState<null | any>(null);
@@ -15,6 +16,7 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [topThreeGames, setTopThreeGames] = useState<string[]>([]);
 
   useEffect(() => {
     loadProfile();
@@ -25,6 +27,11 @@ export default function Profile() {
       const data = await getProfile();
       setProfile(data);
       setNewUsername(data.Username);
+
+      // Fetch top 3 games for badge
+      const topGames = await topThreeinGame(data.ID);
+      setTopThreeGames(topGames);
+      console.log(topGames);
     } catch (err) {
       setMessage((err as Error).message);
     }
@@ -73,6 +80,27 @@ export default function Profile() {
       <h2>Profile</h2>
       <p><strong>Email:</strong> {profile.Email}</p>
       <p><strong>Username:</strong> {profile.Username}</p>
+
+      {topThreeGames.length > 0 && (
+        <div style={{ fontSize: "0.9em", color: "#555", marginBottom: "8px" }}>
+          🏆 Top 3 in:{" "}
+          {topThreeGames.map((name, idx) => (
+            <span
+              key={idx}
+              style={{
+                display: "inline-block",
+                backgroundColor: "#e0ffe0",
+                padding: "2px 8px",
+                borderRadius: "12px",
+                marginRight: "4px",
+              }}
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      )}
+
       <p><strong>First Name:</strong> {profile.FirstName}</p>
       <p><strong>Last Name:</strong> {profile.LastName}</p>
       <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>

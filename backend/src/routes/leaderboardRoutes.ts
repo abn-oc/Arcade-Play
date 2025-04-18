@@ -6,40 +6,46 @@ const leaderboardRoutes = express.Router();
 
 // Get leaderboard for a specific game (high to low)
 leaderboardRoutes.get('/gameleaderboard/:gameId', async (req: Request, res: Response): Promise<any> => {
-    const { gameId } = req.params;
-  
-    try {
-      const pool = await connectDB(); // Ensure the connection is established
-      const result = await pool.request()
-        .input('GameID', sql.Int, gameId)
-        .query(`
-          SELECT u.Username, l.Score
-          FROM LeaderBoard l
-          JOIN Users u ON l.UserID = u.ID
-          WHERE l.GameID = @GameID
-          ORDER BY l.Score DESC
-        `);
-          console.log(result.recordset);
-      return res.json(result.recordset);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Database error' });
-    }
+  const { gameId } = req.params;
+
+  try {
+    const pool = await connectDB();
+    const result = await pool.request()
+      .input('GameID', sql.Int, gameId)
+      .query(`
+        SELECT u.ID, u.Username, l.Score
+        FROM LeaderBoard l
+        JOIN Users u ON l.UserID = u.ID
+        WHERE l.GameID = @GameID AND u.IsDeleted = 0
+        ORDER BY l.Score DESC
+      `);
+    console.log(result.recordset);
+    return res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
+
 
 // Get score of a user in a specific game
 leaderboardRoutes.get('/:userId/:gameId', async (req: Request, res: Response): Promise<any> => {
   const { userId, gameId } = req.params;
 
   try {
-    const pool = await connectDB(); // Ensure the connection is established
+    const pool = await connectDB();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .input('GameID', sql.Int, gameId)
-      .query('SELECT Score FROM LeaderBoard WHERE UserID = @UserID AND GameID = @GameID');
+      .query(`
+        SELECT l.Score
+        FROM LeaderBoard l
+        JOIN Users u ON l.UserID = u.ID
+        WHERE l.UserID = @UserID AND l.GameID = @GameID AND u.IsDeleted = 0
+      `);
 
     if (result.recordset.length === 0) {
-      return res.json( { Score: 0} );
+      return res.json({ Score: 0 });
     }
 
     return res.json(result.recordset[0]);
@@ -48,6 +54,7 @@ leaderboardRoutes.get('/:userId/:gameId', async (req: Request, res: Response): P
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 // Add or update score for a user in a game
 leaderboardRoutes.post('/', async (req: Request, res: Response) => {

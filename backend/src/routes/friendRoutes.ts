@@ -137,13 +137,15 @@ friendRoutes.post('/messages', async (req: Request, res: Response): Promise<any>
       .input('User1', sql.Int, userId1)
       .input('User2', sql.Int, userId2)
       .query(`
-        SELECT SenderID, ReceiverID, Content
-        FROM PrivateMessages
+        SELECT pm.SenderID, pm.ReceiverID, pm.Content
+        FROM PrivateMessages pm
+        JOIN Users u1 ON u1.ID = @User1 AND u1.IsDeleted = 0
+        JOIN Users u2 ON u2.ID = @User2 AND u2.IsDeleted = 0
         WHERE 
-          (SenderID = @User1 AND ReceiverID = @User2)
+          (pm.SenderID = @User1 AND pm.ReceiverID = @User2)
           OR 
-          (SenderID = @User2 AND ReceiverID = @User1)
-        ORDER BY SentTime ASC
+          (pm.SenderID = @User2 AND pm.ReceiverID = @User1)
+        ORDER BY pm.SentTime ASC
       `);
 
     res.status(200).json(result.recordset);
@@ -151,6 +153,7 @@ friendRoutes.post('/messages', async (req: Request, res: Response): Promise<any>
     res.status(500).json({ error: (err as Error).message });
   }
 });
+
 
 friendRoutes.post('/add-message', async (req: Request, res: Response): Promise<any> => {
   const { senderId, receiverId, content } = req.body;
