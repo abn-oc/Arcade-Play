@@ -1,12 +1,11 @@
-// src/components/Profile.tsx
-
 import { useEffect, useState } from "react";
 import {
   changePassword,
   editUsername,
   getProfile,
   deleteAccount,
-  editBio, // Add this function from your authService
+  editBio,
+  changeAvatar, // Add this import
 } from "../services/authService";
 import { topThreeinGame } from "../services/leaderboardService";
 
@@ -88,6 +87,20 @@ export default function Profile() {
     }
   };
 
+  // Complete the handlePfpChange function
+  const handlePfpChange = async (avatarNumber: number) => {
+    try {
+      setLoading(true);
+      await changeAvatar(avatarNumber); // Call the service to change the avatar
+      setMessage("Profile picture updated!");
+      loadProfile(); // Reload the profile to update the avatar
+    } catch (err) {
+      setMessage((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!profile) return <div>Loading...</div>;
 
   return (
@@ -115,6 +128,20 @@ export default function Profile() {
           ))}
         </div>
       )}
+      <img
+        src={`/assets/avatars/${profile.Avatar}.jpg`}
+        alt="avatar"
+        className="w-24 rounded-full"
+      />
+      
+      {/* Add buttons to change avatar */}
+      <p>Click on any avatar to change your avatar</p>
+      <div className="flex flex-row gap-4">
+        <img onClick={() => handlePfpChange(0)} src={`/assets/avatars/${0}.jpg`} alt="" className="w-16 h-16"/>
+        <img onClick={() => handlePfpChange(1)} src={`/assets/avatars/${1}.jpg`} alt="" className="w-16 h-16"/>
+        <img onClick={() => handlePfpChange(2)} src={`/assets/avatars/${2}.jpg`} alt="" className="w-16 h-16"/>
+        <img onClick={() => handlePfpChange(3)} src={`/assets/avatars/${3}.jpg`} alt="" className="w-16 h-16" />
+      </div>
 
       <p><strong>First Name:</strong> {profile.FirstName}</p>
       <p><strong>Last Name:</strong> {profile.LastName}</p>

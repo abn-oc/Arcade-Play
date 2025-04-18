@@ -67,7 +67,7 @@ friendRoutes.post('/list', async (req: Request, res: Response): Promise<any> => 
       // Fetch usernames of all friend IDs
       const idsList = friendIds.join(','); // create comma-separated list
       const userQuery = await pool.request().query(`
-        SELECT ID, Username, isDeleted FROM Users WHERE ID IN (${idsList})
+        SELECT ID, Username, Avatar isDeleted FROM Users WHERE ID IN (${idsList})
       `);
         console.log(userQuery.recordset);
       const friends = userQuery.recordset

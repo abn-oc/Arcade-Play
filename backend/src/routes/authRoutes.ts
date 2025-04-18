@@ -314,5 +314,45 @@ authRoutes.patch("/edit-bio", authenticateToken, async (req: Request, res: Respo
   }
 });
 
+// Change Avatar
+authRoutes.patch("/change-avatar", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  const { avatarNumber } = req.body; // The avatar number the user wants to change to
+  if (avatarNumber === undefined || avatarNumber === null) {
+    return res.status(400).json({ error: "Avatar number is required" });
+  }
+
+  // Ensure the avatar number is valid (you can set a limit based on your avatars)
+  // // const validAvatarNumbers = [0, 0, 1, 2, 3]; // Example avatar numbers
+  // // if (!validAvatarNumbers.includes(avatarNumber)) {
+  // //   return res.status(400).json({ error: "Invalid avatar number" });
+  // // }
+
+  try {
+    const pool = await connectDB();
+
+    // Check if the user's account is deleted
+    const userQuery = await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .query("SELECT IsDeleted FROM Users WHERE ID = @ID");
+
+    const user = userQuery.recordset[0];
+
+    if (user.IsDeleted === 1) {
+      return res.status(400).json({ error: "User account is deleted, cannot update avatar" });
+    }
+
+    // Update the avatar number in the database
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .input("AvatarNumber", sql.Int, avatarNumber) // Store avatar number
+      .query("UPDATE Users SET Avatar = @AvatarNumber WHERE ID = @ID");
+
+    res.json({ message: "Avatar updated successfully" });
+  } catch (err) {
+    console.error("Change avatar error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 export default authRoutes;

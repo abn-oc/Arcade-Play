@@ -65,6 +65,7 @@ export default function ProfileID() {
         </div>
       )}
 
+      <img src={`/assets/avatars/${profile.Avatar}.jpg`} alt="avatar" className="w-24" />
       <p><strong>First Name:</strong> {profile.FirstName}</p>
       <p><strong>Last Name:</strong> {profile.LastName}</p>
       <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>

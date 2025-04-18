@@ -270,6 +270,30 @@ export const editBio = async (newBio: string): Promise<void> => {
   }
 };
 
+export const changeAvatar = async (avatarNumber: number): Promise<void> => {
+  const token = localStorage.getItem('auth_token');  // Assuming the token is stored in localStorage
+
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  try {
+    await axios.patch(
+      `${API_URL}/change-avatar`,  // Adjust this to your API endpoint
+      { avatarNumber },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error : any) {
+    if (error.response) {
+      throw new Error(error.response.data.error || 'Failed to change avatar');
+    }
+    throw new Error('Network error, please try again');
+  }
+};
 
 export default {
   signup,

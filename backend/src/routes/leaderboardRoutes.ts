@@ -13,7 +13,7 @@ leaderboardRoutes.get('/gameleaderboard/:gameId', async (req: Request, res: Resp
     const result = await pool.request()
       .input('GameID', sql.Int, gameId)
       .query(`
-        SELECT u.ID, u.Username, l.Score
+        SELECT u.ID, u.Avatar, u.Username, l.Score
         FROM LeaderBoard l
         JOIN Users u ON l.UserID = u.ID
         WHERE l.GameID = @GameID AND u.IsDeleted = 0
