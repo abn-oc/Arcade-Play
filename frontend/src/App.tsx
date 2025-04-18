@@ -6,6 +6,7 @@ import { userContext } from './contexts/userContext';
 import { getProfile, signout } from './services/authService';
 import Home from './pages/Home';
 import TicTacToe from './pages/TicTacToe';
+import Profile from './pages/Profile';
 
 export default function App() {
 
@@ -44,6 +45,8 @@ export default function App() {
           {user ? (
             <>
               <h4>Signed in as {user.Username}, Email: {user.Email}</h4>
+              <button className='border m-1 p-1' onClick={() => navigate('/home')}>home</button>
+              <button className='border m-1 p-1' onClick={() => navigate('/profile')}>profile</button>
               <button className='border m-1 p-1' onClick={handleSignOut}>signout</button>
             </>
           ) : (
@@ -56,6 +59,7 @@ export default function App() {
         <Routes>
           <Route path='/' element={Landing()}/>
           <Route path='/home' element={Home()}/>
+          <Route path='/profile' element={Profile()}/>
           <Route path='/tictactoe' element={TicTacToe()}/>
         </Routes>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { getGameDetails } from "../services/gameService";
 import { useNavigate } from "react-router-dom";
 import { getGameLeaderboard } from "../services/leaderboardService";
