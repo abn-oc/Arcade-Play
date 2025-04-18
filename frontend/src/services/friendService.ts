@@ -102,7 +102,7 @@ interface UserProfile {
   LastName: string;
   Email: string;
   Username: string;
-  Avatar: string | null;
+  Avatar: number | null;
   AuthProvider: string | null;
   GamesPlayed: number
 }
@@ -116,5 +116,15 @@ export const getProfileID = async (id: number): Promise<UserProfile> => {
       throw new Error(error.response.data.error || 'Failed to fetch profile');
     }
     throw new Error('Network error, please try again');
+  }
+};
+
+export const getAvatarID = async (id: number): Promise<number> => {
+  try {
+    const profile = await getProfileID(id);
+    return profile.Avatar ?? 0; // Return 0 if Avatar is null
+  } catch (error: any) {
+    console.error('Failed to get avatar by ID:', error);
+    throw new Error('Could not retrieve avatar');
   }
 };
