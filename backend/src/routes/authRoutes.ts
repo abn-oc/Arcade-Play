@@ -236,9 +236,21 @@ authRoutes.delete("/delete-account", authenticateToken, async (req: Request, res
     const pool = await connectDB();
 
     // Soft delete the user
+    const timestamp = Date.now().toString();
+
     await pool.request()
       .input("ID", sql.Int, req.user?.id)
-      .query("UPDATE Users SET IsDeleted = 1 WHERE ID = @ID");
+      .input("Email", sql.VarChar(100), timestamp)
+      .input("Username", sql.NVarChar(50), timestamp)
+      .input("ProviderUserID", sql.NVarChar(255), timestamp)
+      .query(`
+        UPDATE Users
+        SET IsDeleted = 1,
+            Email = @Email,
+            Username = @Username,
+            ProviderUserID = @ProviderUserID
+        WHERE ID = @ID
+      `);
 
     res.json({ message: "Account deleted successfully" });
   } catch (err) {
