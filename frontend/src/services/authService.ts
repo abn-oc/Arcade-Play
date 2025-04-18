@@ -234,6 +234,22 @@ export const getAuthHeaders = () => {
   };
 };
 
+export const incrementGamesPlayed = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+  try {
+    const response = await axios.post(`${API_URL}/increase-games-played`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    console.log('Games played incremented:', response.data.message);
+  } catch (error) {
+    console.error('Error incrementing GamesPlayed:', error);
+    throw new Error('Failed to increment GamesPlayed');
+  }
+};
+
 export default {
   signup,
   signin,

@@ -6,6 +6,7 @@ import FriendChat from "../components/FriendChat";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MembersList from "../components/MembersList";
 import { getUserScore, updateUserScore } from "../services/leaderboardService";
+import { incrementGamesPlayed } from "../services/authService";
 
 export default function TicTacToe() {
 
@@ -86,6 +87,7 @@ export default function TicTacToe() {
 
     async function handleWin() {
       setResult("loading");
+      await incrementGamesPlayed();
       if (user) {
         let x: number = (await getUserScore(user.ID, 1)).Score;
         x = x + 10;
@@ -97,6 +99,7 @@ export default function TicTacToe() {
 
     async function handleLose() {
       setResult("loading");
+      await incrementGamesPlayed();
       if (user) {
         let x: number = (await getUserScore(user.ID, 1)).Score;
         x = x - 5;
@@ -105,7 +108,6 @@ export default function TicTacToe() {
       }
       setResult("lose");
       setRoomMembers(a => [...a]);
-
     }
 
     function invalidCode() {

@@ -259,5 +259,26 @@ authRoutes.delete("/delete-account", authenticateToken, async (req: Request, res
   }
 });
 
+// Increase GamesPlayed by 1
+authRoutes.post("/increase-games-played", authenticateToken, async (req: Request, res: Response): Promise<any> => {
+  try {
+    console.log("YOU CALLED TS")
+    const pool = await connectDB();
+    console.log("im using ts for increasing gaem " + req.user?.id);
+    await pool.request()
+      .input("ID", sql.Int, req.user?.id)
+      .query(`
+        UPDATE Users
+        SET GamesPlayed = ISNULL(GamesPlayed, 0) + 1
+        WHERE ID = @ID AND IsDeleted = 0
+      `);
+
+    res.json({ message: "GamesPlayed incremented successfully" });
+  } catch (err) {
+    console.error("Increase GamesPlayed error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 
 export default authRoutes;
