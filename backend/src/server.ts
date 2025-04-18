@@ -151,6 +151,8 @@ io.on("connection", (socket) => {
       const targetsocketID = onlineUsers.find(user => user.ID === targetID)?.socketID;
       const p1userName = onlineUsers.find(user => user.ID === room.player1ID)?.userName;
       const p2userName = onlineUsers.find(user => user.ID === room.player2ID)?.userName;
+      const p2SID = onlineUsers.find(user => user.ID === room.player2ID)?.socketID;
+      if (p2SID) io.to(p2SID).emit('room-update', room.gameTable, room.player1ID, p1userName, room.player2ID, p2userName);
       if (targetsocketID) io.to(targetsocketID).emit('room-update', room.gameTable, room.player1ID, p1userName, room.player2ID, p2userName);
     }
     else if (room && room.player2ID === null && room.player1ID !== userID) {
@@ -159,6 +161,8 @@ io.on("connection", (socket) => {
       const targetsocketID = onlineUsers.find(user => user.ID === targetID)?.socketID;
       const p1userName = onlineUsers.find(user => user.ID === room.player1ID)?.userName;
       const p2userName = onlineUsers.find(user => user.ID === room.player2ID)?.userName;
+      const p1SID = onlineUsers.find(user => user.ID === room.player1ID)?.socketID;
+      if (p1SID) io.to(p1SID).emit('room-update', room.gameTable, room.player1ID, p1userName, room.player2ID, p2userName);
       if (targetsocketID) io.to(targetsocketID).emit('room-update', room.gameTable, room.player1ID, p1userName, room.player2ID, p2userName);
     }
     else if (!room) {
@@ -173,11 +177,14 @@ io.on("connection", (socket) => {
       room.gameTable[position] = room.turn % 2 == 0 ? 'X' : 'O';
 
       if (checkWin(room.gameTable)) {
+        
         const winnerSocket = onlineUsers.find(user => user.ID === userID)?.socketID;
         if (winnerSocket) io.to(winnerSocket).emit('tictactoe-win');
         const loserID = userID == room.player1ID ? room.player2ID : room.player1ID;
         const loserSocket = onlineUsers.find(user => user.ID === loserID)?.socketID;
         if (loserSocket) io.to(loserSocket).emit('tictactoe-lose');
+
+        TicTacToeRooms = TicTacToeRooms.filter(Room => Room.code !== room.code);
       }
 
       room.turn = room.turn + 1;
