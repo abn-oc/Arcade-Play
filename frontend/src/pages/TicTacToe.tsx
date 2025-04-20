@@ -9,7 +9,7 @@ import { getUserScore, updateUserScore } from "../services/leaderboardService";
 import { incrementGamesPlayed } from "../services/authService";
 
 export default function TicTacToe() {
-
+  // getting room code from url (0 if room should be created)
   const [searchParams] = useSearchParams();
   const roomCodeFromURL = searchParams.get("code");
 
@@ -17,24 +17,26 @@ export default function TicTacToe() {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
-  const [selectedFriend, setSelectedFriend] = useState<{ ID: number; userName: string } | null>(null);
-  const [roomMembers, setRoomMembers] = useState<{ ID: number; userName: string }[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<{
+    ID: number;
+    userName: string;
+  } | null>(null);
+  const [roomMembers, setRoomMembers] = useState<
+    { ID: number; userName: string }[]
+  >([]);
   const [table, setTable] = useState<string[]>(Array(9).fill(""));
   const [turn, setTurn] = useState<number>(0);
   const [code, setCode] = useState<string>("Loading...");
   const [waiting, setWaiting] = useState<boolean>(true);
-//   const [shouldCreateRoom, setShouldCreateRoom] = useState<boolean>(false);
   const [result, setResult] = useState<"win" | "lose" | "loading" | null>(null);
 
   function leaveRoom() {
-    // setShouldCreateRoom(true);
-    // localStorage.removeItem("tictactoe-room-code");
     setCode("Loading...");
-    setTable(Array(9).fill(''));
+    setTable(Array(9).fill(""));
     setTurn(0);
     setWaiting(true);
     setResult(null);
-    localStorage.setItem('pageReloaded', 'false');
+    localStorage.setItem("pageReloaded", "false");
     navigate("/home");
   }
 
@@ -54,10 +56,10 @@ export default function TicTacToe() {
     };
   }, [socket]);
 
+  // socket logic ( again, not our focus so it can have issues )
   useEffect(() => {
     async function codeSet(code: string) {
       setCode(code);
-    //   localStorage.setItem("tictactoe-room-code", code);
       if (user) setRoomMembers([{ ID: user.ID, userName: user.Username }]);
       setTurn(0);
       setWaiting(true);
@@ -81,7 +83,6 @@ export default function TicTacToe() {
       setTable(newTable);
       setTurn(Turn);
       setWaiting(false);
-    //   setResult(null);
 
       console.log(members);
     }
@@ -95,7 +96,7 @@ export default function TicTacToe() {
         await updateUserScore(user.ID, 1, x);
       }
       setResult("win");
-      setRoomMembers(a => [...a]);
+      setRoomMembers((a) => [...a]);
     }
 
     async function handleLose() {
@@ -108,11 +109,11 @@ export default function TicTacToe() {
         await updateUserScore(user.ID, 1, x);
       }
       setResult("lose");
-      setRoomMembers(a => [...a]);
+      setRoomMembers((a) => [...a]);
     }
 
     function invalidCode() {
-        setCode("Invalid room code. Leave and try again")
+      setCode("Invalid room code. Leave and try again");
     }
 
     if (!socket || !user?.ID) return;
@@ -123,25 +124,15 @@ export default function TicTacToe() {
     socket?.on("tictactoe-lose", handleLose);
     socket?.on("invalid-code", invalidCode);
 
-    // old logic using localStorage
-    // const localCode = localStorage.getItem("tictactoe-room-code");
-    // if (localCode) { ... }
-
-    // if (navState?.mode === "join" && navState.code) {
-    // setCode(navState.code);
-    // socket?.emit("join-room-tictactoe", navState.code, user.ID);
-    // } else if (navState?.mode === "create") {
-    // socket?.emit("create-room-tictactoe", user.ID);
-    // }
-
+    // if room code isnt 0 create room, otherwise join whatever code u got from url
     if (roomCodeFromURL !== "0") {
-        if (roomCodeFromURL) {
-            setCode(roomCodeFromURL);
-            socket.emit("join-room-tictactoe", roomCodeFromURL, user.ID);
-            socket.emit("request-update", user.ID);
-        }
-    } else if (roomCodeFromURL === "0"){
-        socket.emit("create-room-tictactoe", user.ID);
+      if (roomCodeFromURL) {
+        setCode(roomCodeFromURL);
+        socket.emit("join-room-tictactoe", roomCodeFromURL, user.ID);
+        socket.emit("request-update", user.ID);
+      }
+    } else if (roomCodeFromURL === "0") {
+      socket.emit("create-room-tictactoe", user.ID);
     }
 
     return () => {
@@ -151,11 +142,14 @@ export default function TicTacToe() {
       socket?.off("tictactoe-lose", handleLose);
       socket?.off("invalid-code", invalidCode);
     };
-  }, [socket,/* shouldCreateRoom , */user]);
+  }, [socket, user]);
 
+  // send the id of client to server thru socket
+  // the server will decide if it was this client's turn or not and update the game table accordingly
   function makeMove(index: number) {
     if (!user || result !== null || waiting) return;
-    const currentTurnUserID = turn % 2 === 0 ? roomMembers[0]?.ID : roomMembers[1]?.ID;
+    const currentTurnUserID =
+      turn % 2 === 0 ? roomMembers[0]?.ID : roomMembers[1]?.ID;
     if (user.ID !== currentTurnUserID || table[index] !== "") return;
     socket?.emit("tictactoe-move", code, user.ID, index);
   }
@@ -165,7 +159,9 @@ export default function TicTacToe() {
       <h1 className="text-2xl font-bold">Tic Tac Toe</h1>
       <p className="text-gray-600">Room Code: {code}</p>
 
-      {waiting && <p className="text-yellow-600">Waiting for opponent to join...</p>}
+      {waiting && (
+        <p className="text-yellow-600">Waiting for opponent to join...</p>
+      )}
 
       <div className="grid grid-cols-3 gap-2">
         {table.map((cell, i) => (
@@ -180,30 +176,42 @@ export default function TicTacToe() {
       </div>
 
       <p>
-        Turn: {turn % 2 === 0 ? roomMembers[0]?.userName : roomMembers[1]?.userName}
+        Turn:{" "}
+        {turn % 2 === 0 ? roomMembers[0]?.userName : roomMembers[1]?.userName}
       </p>
 
-      {result === "win" && <p className="text-green-600 font-bold">🎉 You won! Score + 10</p>}
-      {result === "lose" && <p className="text-red-600 font-bold">😢 You lost! Score - 5</p>}
-      {result === "loading" && <p className="text-black-600 font-bold"> Checking Game...</p>}
+      {result === "win" && (
+        <p className="text-green-600 font-bold">🎉 You won! Score + 10</p>
+      )}
+      {result === "lose" && (
+        <p className="text-red-600 font-bold">😢 You lost! Score - 5</p>
+      )}
+      {result === "loading" && (
+        <p className="text-black-600 font-bold"> Checking Game...</p>
+      )}
 
-      <button onClick={leaveRoom} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
+      <button
+        onClick={leaveRoom}
+        className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+      >
         Leave Room
       </button>
 
       <div className="flex w-full space-x-4 mt-8">
-      <FriendList selFriend={selFriend} />
+        <FriendList selFriend={selFriend} />
         {selectedFriend && (
-        <FriendChat
-            friend={{ ID: selectedFriend.ID, userName: selectedFriend.userName }}
+          <FriendChat
+            friend={{
+              ID: selectedFriend.ID,
+              userName: selectedFriend.userName,
+            }}
             close={() => setSelectedFriend(null)}
             closable={true}
-        />
+          />
         )}
         <GlobalChat />
         <MembersList members={roomMembers} />
         <div></div>
-
       </div>
     </div>
   );

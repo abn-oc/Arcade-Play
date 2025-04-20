@@ -5,12 +5,11 @@ import {
   getProfile,
   deleteAccount,
   editBio,
-  changeAvatar, // Add this import
+  changeAvatar,
 } from "../services/authService";
 import { topInGame } from "../services/leaderboardService";
 
 export default function Profile() {
-
   const [profile, setProfile] = useState<null | any>(null);
   const [newUsername, setNewUsername] = useState("");
   const [originalPassword, setOriginalPassword] = useState("");
@@ -20,18 +19,20 @@ export default function Profile() {
   const [message, setMessage] = useState("");
   const [topThreeGames, setTopThreeGames] = useState<string[]>([]);
 
+  // on component mount
   useEffect(() => {
     loadProfile();
   }, []);
 
+  // loads profile from db
   const loadProfile = async () => {
     try {
       const data = await getProfile();
       setProfile(data);
       setNewUsername(data.Username);
-      setNewBio(data.Bio || ""); // Assuming the bio is in the profile data
+      setNewBio(data.Bio || "");
 
-      // Fetch top games for badge
+      // fetch game names this user is top in
       const topGames = await topInGame(data.ID);
       setTopThreeGames(topGames);
     } catch (err) {
@@ -88,13 +89,12 @@ export default function Profile() {
     }
   };
 
-  // Complete the handlePfpChange function
   const handlePfpChange = async (avatarNumber: number) => {
     try {
       setLoading(true);
-      await changeAvatar(avatarNumber); // Call the service to change the avatar
+      await changeAvatar(avatarNumber);
       setMessage("Profile picture updated!");
-      loadProfile(); // Reload the profile to update the avatar
+      loadProfile();
     } catch (err) {
       setMessage((err as Error).message);
     } finally {
@@ -107,12 +107,16 @@ export default function Profile() {
   return (
     <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
       <h2>Profile</h2>
-      <p><strong>Email:</strong> {profile.Email}</p>
-      <p><strong>Username:</strong> {profile.Username}</p>
+      <p>
+        <strong>Email:</strong> {profile.Email}
+      </p>
+      <p>
+        <strong>Username:</strong> {profile.Username}
+      </p>
 
       {topThreeGames.length > 0 && (
         <div style={{ fontSize: "0.9em", color: "#555", marginBottom: "8px" }}>
-          🏆 Top 3 in:{" "}
+          🏆 Top Player in:{" "}
           {topThreeGames.map((name, idx) => (
             <span
               key={idx}
@@ -134,21 +138,51 @@ export default function Profile() {
         alt="avatar"
         className="w-24 rounded-full"
       />
-      
+
       {/* Add buttons to change avatar */}
       <p>Click on any avatar to change your avatar</p>
       <div className="flex flex-row gap-4">
-        <img onClick={() => handlePfpChange(0)} src={`/assets/avatars/${0}.jpg`} alt="" className="w-16 h-16"/>
-        <img onClick={() => handlePfpChange(1)} src={`/assets/avatars/${1}.jpg`} alt="" className="w-16 h-16"/>
-        <img onClick={() => handlePfpChange(2)} src={`/assets/avatars/${2}.jpg`} alt="" className="w-16 h-16"/>
-        <img onClick={() => handlePfpChange(3)} src={`/assets/avatars/${3}.jpg`} alt="" className="w-16 h-16" />
+        <img
+          onClick={() => handlePfpChange(0)}
+          src={`/assets/avatars/${0}.jpg`}
+          alt=""
+          className="w-16 h-16"
+        />
+        <img
+          onClick={() => handlePfpChange(1)}
+          src={`/assets/avatars/${1}.jpg`}
+          alt=""
+          className="w-16 h-16"
+        />
+        <img
+          onClick={() => handlePfpChange(2)}
+          src={`/assets/avatars/${2}.jpg`}
+          alt=""
+          className="w-16 h-16"
+        />
+        <img
+          onClick={() => handlePfpChange(3)}
+          src={`/assets/avatars/${3}.jpg`}
+          alt=""
+          className="w-16 h-16"
+        />
       </div>
 
-      <p><strong>First Name:</strong> {profile.FirstName}</p>
-      <p><strong>Last Name:</strong> {profile.LastName}</p>
-      <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>
-      <p><strong>Auth Provider:</strong> {profile.AuthProvider || "email"}</p>
-      <p><strong>Bio:</strong> {profile.Bio || "No bio available"}</p>
+      <p>
+        <strong>First Name:</strong> {profile.FirstName}
+      </p>
+      <p>
+        <strong>Last Name:</strong> {profile.LastName}
+      </p>
+      <p>
+        <strong>Games Played:</strong> {profile.GamesPlayed}
+      </p>
+      <p>
+        <strong>Auth Provider:</strong> {profile.AuthProvider || "email"}
+      </p>
+      <p>
+        <strong>Bio:</strong> {profile.Bio || "No bio available"}
+      </p>
 
       <hr />
 

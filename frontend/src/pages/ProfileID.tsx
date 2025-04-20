@@ -1,18 +1,11 @@
-// src/components/Profile.tsx
-
 import { useEffect, useState } from "react";
-import {
-  getProfileID,
-} from "../services/friendService";
-import { topInGame } from "../services/leaderboardService"; // adjust path if needed
+import { getProfileID } from "../services/friendService";
+import { topInGame } from "../services/leaderboardService";
 import { useParams } from "react-router-dom";
 
 export default function ProfileID() {
-
   const { id } = useParams();
-  console.log(id);
-  const aid = parseInt(id || '', 10);
-  console.log("i got this from params " + id);
+  const aid = parseInt(id || "", 10);
   const [profile, setProfile] = useState<null | any>(null);
   const [message, setMessage] = useState("");
   const [topThreeGames, setTopThreeGames] = useState<string[]>([]);
@@ -24,11 +17,8 @@ export default function ProfileID() {
   const loadProfile = async () => {
     try {
       const data = await getProfileID(aid);
-      console.log("AaaaaaaaaA");
-      console.log(data);
-      console.log("AaaaaaaaaA");
       setProfile(data);
-      // Fetch top 3 games for badge
+      // top games for this user
       const topGames = await topInGame(data.ID);
       setTopThreeGames(topGames);
       console.log(topGames);
@@ -42,12 +32,16 @@ export default function ProfileID() {
   return (
     <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
       <h2>Profile</h2>
-      <p><strong>Email:</strong> {profile.Email}</p>
-      <p><strong>Username:</strong> {profile.Username}</p>
+      <p>
+        <strong>Email:</strong> {profile.Email}
+      </p>
+      <p>
+        <strong>Username:</strong> {profile.Username}
+      </p>
 
       {topThreeGames.length > 0 && (
         <div style={{ fontSize: "0.9em", color: "#555", marginBottom: "8px" }}>
-          🏆 Top 3 in:{" "}
+          🏆 Top Player in:{" "}
           {topThreeGames.map((name, idx) => (
             <span
               key={idx}
@@ -65,20 +59,31 @@ export default function ProfileID() {
         </div>
       )}
 
-      <img src={`/assets/avatars/${profile.Avatar}.jpg`} alt="avatar" className="w-24" />
-      <p><strong>First Name:</strong> {profile.FirstName}</p>
-      <p><strong>Last Name:</strong> {profile.LastName}</p>
-      <p><strong>Games Played:</strong> {profile.GamesPlayed}</p>
-      <p><strong>Auth Provider:</strong> {profile.AuthProvider || "email"}</p>
-      <p><strong>Bio:</strong> {profile.Bio || "No bio available"}</p>
+      <img
+        src={`/assets/avatars/${profile.Avatar}.jpg`}
+        alt="avatar"
+        className="w-24"
+      />
+      <p>
+        <strong>First Name:</strong> {profile.FirstName}
+      </p>
+      <p>
+        <strong>Last Name:</strong> {profile.LastName}
+      </p>
+      <p>
+        <strong>Games Played:</strong> {profile.GamesPlayed}
+      </p>
+      <p>
+        <strong>Auth Provider:</strong> {profile.AuthProvider || "email"}
+      </p>
+      <p>
+        <strong>Bio:</strong> {profile.Bio || "No bio available"}
+      </p>
       <hr />
 
-      
       {message && (
         <div style={{ marginTop: "10px", color: "green" }}>{message}</div>
       )}
-
-
     </div>
   );
 }

@@ -1,34 +1,31 @@
-// src/pages/Landing.tsx
-
-import { useContext, useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { userContext } from '../contexts/userContext';
+import { useContext, useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { userContext } from "../contexts/userContext";
 import {
   getProfile,
   signin,
   signup,
-  signinWithGoogle
-} from '../services/authService';
-import { useNavigate } from 'react-router-dom';
+  signinWithGoogle,
+} from "../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function Landing() {
-
   const navigate = useNavigate();
 
   const setUser = useContext(userContext)?.setUser;
 
-  // Sign-in state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // signin form
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  // Sign-up state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [username, setUsername] = useState('');
+  // signup form
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [username, setUsername] = useState("");
 
-  // Error state
+  // error state for showing error msg
   const [error, setError] = useState<string | null>(null);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -36,10 +33,17 @@ export default function Landing() {
     setError(null);
 
     try {
-      await signin({ email: email, password: password, authProvider: "email", providerUserID: email });
+      // set token
+      await signin({
+        email: email,
+        password: password,
+        authProvider: "email",
+        providerUserID: email,
+      });
+      // get profile and set it to user if have a valid token
       const profile = await getProfile();
-      if(setUser) setUser(profile);
-      navigate('/home');
+      if (setUser) setUser(profile);
+      navigate("/home");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -50,6 +54,7 @@ export default function Landing() {
     setError(null);
 
     try {
+      // calling service to make profile in backend
       await signup({
         email: signupEmail,
         password: signupPassword,
@@ -57,28 +62,35 @@ export default function Landing() {
         lastName: lastName,
         username: username,
         authProvider: "email",
-        providerUserID: signupEmail
+        providerUserID: signupEmail,
       });
-      
 
-      // Auto login after signup
-      await signin({ email: signupEmail, password: signupPassword, authProvider: "email", providerUserID: signupEmail });
+      // auto sign in after signup
+      await signin({
+        email: signupEmail,
+        password: signupPassword,
+        authProvider: "email",
+        providerUserID: signupEmail,
+      });
       const profile = await getProfile();
-      if(setUser) setUser(profile);
-      navigate('/home');
+      if (setUser) setUser(profile);
+      navigate("/home");
     } catch (err) {
       setError((err as Error).message);
     }
   };
 
+  // what to do if google oAuth signin is successful
   const handleGoogleSuccess = async (credentialResponse: any) => {
     if (!credentialResponse.credential) return;
 
     try {
+      // call service to which takes google user and sets token from it
       await signinWithGoogle(credentialResponse.credential);
+      // again, if u got a valid token, set it to user
       const profile = await getProfile();
-      if(setUser) setUser(profile);
-      navigate('/home');
+      if (setUser) setUser(profile);
+      navigate("/home");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -98,7 +110,7 @@ export default function Landing() {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               className="border rounded p-2"
               required
@@ -106,7 +118,7 @@ export default function Landing() {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               className="border rounded p-2"
               required
@@ -122,7 +134,7 @@ export default function Landing() {
           <div className="mt-4 flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google Sign-In failed')}
+              onError={() => setError("Google Sign-In failed")}
             />
           </div>
         </div>
@@ -134,7 +146,7 @@ export default function Landing() {
             <input
               type="text"
               value={firstName}
-              onChange={e => setFirstName(e.target.value)}
+              onChange={(e) => setFirstName(e.target.value)}
               placeholder="First Name"
               className="border rounded p-2"
               required
@@ -142,7 +154,7 @@ export default function Landing() {
             <input
               type="text"
               value={lastName}
-              onChange={e => setLastName(e.target.value)}
+              onChange={(e) => setLastName(e.target.value)}
               placeholder="Last Name"
               className="border rounded p-2"
               required
@@ -150,7 +162,7 @@ export default function Landing() {
             <input
               type="text"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
               className="border rounded p-2"
               required
@@ -158,7 +170,7 @@ export default function Landing() {
             <input
               type="email"
               value={signupEmail}
-              onChange={e => setSignupEmail(e.target.value)}
+              onChange={(e) => setSignupEmail(e.target.value)}
               placeholder="Email"
               className="border rounded p-2"
               required
@@ -166,7 +178,7 @@ export default function Landing() {
             <input
               type="password"
               value={signupPassword}
-              onChange={e => setSignupPassword(e.target.value)}
+              onChange={(e) => setSignupPassword(e.target.value)}
               placeholder="Password"
               className="border rounded p-2"
               required

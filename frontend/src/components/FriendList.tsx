@@ -47,12 +47,11 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
     });
     if (user) addFriend(user.ID, request.ID);
 
-    // const avatarID = await getAvatarID(request.ID);
-    // if u add check if it already doesnt exist before setting
-    // the bug of duplicate friend is fixed which happens if 2 peolpe send each other request and both accept
-
-    // or i can just comment this out, lets see - commenting next line to see
-    // setFriendList(prev => [...prev, { ID: request.ID, userName: request.userName, avatarID }]);
+    const avatarID = await getAvatarID(request.ID);
+    setFriendList((prev) => [
+      ...prev,
+      { ID: request.ID, userName: request.userName, avatarID },
+    ]);
   }
 
   function removeFriend(id: number) {
@@ -122,9 +121,8 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
     };
 
     const RemovedFriend = (id: number) => {
-      // filtering that friend out
-      const newFriendsList = friendList.filter((friend) => friend.ID !== id);
-      setFriendList(() => newFriendsList);
+      // filtering out that friend
+      setFriendList((prev) => prev.filter((friend) => friend.ID !== id));
     };
 
     socket?.on("receive-friend-request", getRequest);
