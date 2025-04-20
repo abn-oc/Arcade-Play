@@ -36,7 +36,7 @@ export default function Landing() {
     setError(null);
 
     try {
-      await signin({ email, password });
+      await signin({ email: email, password: password, authProvider: "email", providerUserID: email });
       const profile = await getProfile();
       if(setUser) setUser(profile);
       navigate('/home');
@@ -53,13 +53,16 @@ export default function Landing() {
       await signup({
         email: signupEmail,
         password: signupPassword,
-        firstName,
-        lastName,
-        username
+        firstName: firstName,
+        lastName: lastName,
+        username: username,
+        authProvider: "email",
+        providerUserID: signupEmail
       });
+      
 
       // Auto login after signup
-      await signin({ email: signupEmail, password: signupPassword });
+      await signin({ email: signupEmail, password: signupPassword, authProvider: "email", providerUserID: signupEmail });
       const profile = await getProfile();
       if(setUser) setUser(profile);
       navigate('/home');

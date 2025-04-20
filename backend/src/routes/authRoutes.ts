@@ -34,7 +34,8 @@ authRoutes.post(
       !username ||
       !firstName ||
       !lastName ||
-      providerUserID
+      !providerUserID ||
+      !authProvider
     ) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -99,7 +100,7 @@ authRoutes.post(
     const { email, password, authProvider, providerUserID }: AuthRequestBody =
       req.body;
 
-    if (!email || !password || !authProvider) {
+    if (!email || (!password && !authProvider)) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -124,7 +125,7 @@ authRoutes.post(
       const userRecord: UserRecord = user.recordset[0];
 
       // check if password is valid if user signed in through email/password
-      if (authProvider === "email" && userRecord.Passwords) {
+      if (authProvider === "email" && password && userRecord.Passwords) {
         const isValid = await bcrypt.compare(password, userRecord.Passwords);
         if (!isValid) {
           return res.status(401).json({ error: "Invalid credentials" });

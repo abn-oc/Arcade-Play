@@ -117,10 +117,7 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.trim() === "Invalid credentials") {
-        console.log("yo inv creds");
         const googleUser = parseJwt(credential);
-        console.log("signing up w google");
-
         try {
           await signup({
             email: googleUser.email,
@@ -130,8 +127,6 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
             firstName: googleUser.given_name,
             lastName: googleUser.family_name
           });
-
-          console.log("done, signing in w google");
 
           // After signup, sign in
           await signin({
@@ -148,7 +143,6 @@ export const signinWithGoogle = async (credential: string): Promise<void> => {
       throw new Error('Failed to sign in with Google');
     }
   }
-  console.log('eeeeeeeeeeeeeeeeeeeeeeeeee');
 };
 
 // Edit username
