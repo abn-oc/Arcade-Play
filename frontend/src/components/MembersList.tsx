@@ -2,30 +2,32 @@ import { useEffect, useState } from "react";
 import { getUserScore } from "../services/leaderboardService";
 import { getAvatarID } from "../services/friendService";
 
+// the members array passed to this component already have id and username
 export default function MembersList({
   members,
 }: {
   members: { ID: number; userName: string }[];
 }) {
-  const [scoreList, setScoreList] = useState<{Score: number}[]>([]);
+  const [scoreList, setScoreList] = useState<{ Score: number }[]>([]);
 
   const [avatars, setAvatars] = useState<number[]>([]);
 
+  // on members changing, fetch scores avatars and set them (we already have id and username)
   useEffect(() => {
     async function fetchScores() {
-        console.log("gonna fetch scores of members")
-        const scores = await Promise.all(
+      // for every member, fetch and set scores
+      const scores = await Promise.all(
         members.map((member) => getUserScore(member.ID, 1))
       );
-      //for every member, put value returned by getAvatarID in avatars
+      // for every member,fetch avatarid and set avatar
       members.forEach(async (member) => {
         const newAvatar = await getAvatarID(member.ID);
-        setAvatars(prev => [...prev, newAvatar]);
-      })
-      console.log(scores)
+        setAvatars((prev) => [...prev, newAvatar]);
+      });
       setScoreList(scores);
     }
 
+    // ofc only call that if members are more than 0 (i want to try removing this check, see what it does later)
     if (members.length > 0) fetchScores();
   }, [members]);
 
@@ -42,10 +44,15 @@ export default function MembersList({
         {members.map((member, index) => (
           <div key={member.ID} className="mb-2 last:mb-0">
             <span className="font-semibold text-blue-700 flex flex-row gap-2 items-center">
-              <img src={`/assets/avatars/${avatars[index]}.jpg`} className="w-12 rounded-full" />
+              <img
+                src={`/assets/avatars/${avatars[index]}.jpg`}
+                className="w-12 rounded-full"
+              />
               {member.userName} —{" "}
               <span className="text-gray-800">
-                {scoreList[index] !== undefined ? scoreList[index].Score : "Loading..."}
+                {scoreList[index] !== undefined
+                  ? scoreList[index].Score
+                  : "Loading..."}
               </span>
             </span>
           </div>

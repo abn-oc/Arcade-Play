@@ -2,23 +2,26 @@ import { createContext, useState } from 'react';
 import { userType } from '../types/userTypes';
 import { io, Socket } from 'socket.io-client';
 
-// Define the context value type
+// type of context, it will have user SetUser and socket be passed everywhere
 type UserContextType = {
   user: userType | null;
   setUser: React.Dispatch<React.SetStateAction<userType | null>>;
   socket: Socket;
 };
 
-// Create the context with correct type (can be null initially)
+// creating context which will be passed around
 export const userContext = createContext<UserContextType | null>(null);
 
+// wrap all app in this
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<userType | null>(null);
 
+  // making single instance of user setUser and socket for the context
+  const [user, setUser] = useState<userType | null>(null);
   const socket: Socket = io('http://localhost:3000');
 
   return (
     <userContext.Provider value={{ user, setUser, socket }}>
+      {/* children is basically App.tsx now everything inside App.tsx can access this user, setUser and socket */}
       {children}
     </userContext.Provider>
   );

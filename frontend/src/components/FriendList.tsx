@@ -1,51 +1,65 @@
-import { useContext, useEffect, useState } from "react"
-import { userContext } from "../contexts/userContext"
-import { addFriend, getFriends, getProfileID, removeFriend as RemoveFriend } from "../services/friendService";
-import { getAvatarID } from "../services/friendService"; // adjust the path as needed
+import { useContext, useEffect, useState } from "react";
+import { userContext } from "../contexts/userContext";
+import {
+  addFriend,
+  getFriends,
+  getProfileID,
+  removeFriend as RemoveFriend,
+} from "../services/friendService";
+import { getAvatarID } from "../services/friendService";
 import { useNavigate } from "react-router-dom";
 
+// the selFriend function is used to set the friend whose dms are to be opened in FriendChat
+// its passed as prop from the parent of both to share this state between both
 export default function FriendList({ selFriend }: { selFriend: any }) {
-
   const navigate = useNavigate();
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
-  const [sendRequestText, setSendRequestText] = useState<string>('');
-  const [friendList, setFriendList] = useState<{ ID: number, userName: string, avatarID: number }[]>([]);
-  const [requests, setRequests] = useState<{ ID: number, userName: string }[]>([]);
+  const [sendRequestText, setSendRequestText] = useState<string>("");
+  const [friendList, setFriendList] = useState<
+    { ID: number; userName: string; avatarID: number }[]
+  >([]);
+  const [requests, setRequests] = useState<{ ID: number; userName: string }[]>(
+    []
+  );
 
   function sendRequest(e: any) {
     e.preventDefault();
-    socket?.emit('send-friend-request', {
+    socket?.emit("send-friend-request", {
       toUsername: sendRequestText,
       fromUsername: user?.Username,
-      fromID: user?.ID
+      fromID: user?.ID,
     });
-    setSendRequestText('');
+    setSendRequestText("");
   }
 
   function deleteRequest(id: number) {
-    const newReqs = requests.filter(request => request.ID !== id);
+    const newReqs = requests.filter((request) => request.ID !== id);
     setRequests(newReqs);
   }
 
-  async function acceptRequest(request: { ID: number, userName: string }) {
+  async function acceptRequest(request: { ID: number; userName: string }) {
     deleteRequest(request.ID);
-    socket?.emit('accept-friend-request', {
+    socket?.emit("accept-friend-request", {
       toID: request.ID,
-      fromID: user?.ID
+      fromID: user?.ID,
     });
     if (user) addFriend(user.ID, request.ID);
 
-    const avatarID = await getAvatarID(request.ID);
-    setFriendList(prev => [...prev, { ID: request.ID, userName: request.userName, avatarID }]);
+    // const avatarID = await getAvatarID(request.ID);
+    // if u add check if it already doesnt exist before setting
+    // the bug of duplicate friend is fixed which happens if 2 peolpe send each other request and both accept
+
+    // or i can just comment this out, lets see - commenting next line to see
+    // setFriendList(prev => [...prev, { ID: request.ID, userName: request.userName, avatarID }]);
   }
 
   function removeFriend(id: number) {
     if (user) RemoveFriend(id, user?.ID);
-    const newFriendsList = friendList.filter(friend => friend.ID !== id);
+    const newFriendsList = friendList.filter((friend) => friend.ID !== id);
     setFriendList(newFriendsList);
-    socket?.emit('remove-friend', user?.ID, id);
+    socket?.emit("remove-friend", user?.ID, id);
   }
 
   async function gotoProfile(id: number) {
@@ -53,7 +67,8 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
     navigate(`/profile/${Id}`);
   }
 
-  // Load friends and their avatars
+  // load friends and their avatars on startup/reloads (user in dependancy because reload resets user state
+  // while re-getting user state via local token)
   useEffect(() => {
     (async () => {
       if (user) {
@@ -62,7 +77,7 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
           friends.map(async (friend) => ({
             ID: friend.id,
             userName: friend.username,
-            avatarID: await getAvatarID(friend.id)
+            avatarID: await getAvatarID(friend.id),
           }))
         );
         setFriendList(enrichedFriends);
@@ -72,33 +87,54 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
 
   // Socket handlers
   useEffect(() => {
-    const getRequest = (request: { fromUsername: string, fromID: number }) => {
-      setRequests(prev => {
-        if (prev.find(req => req.ID === request.fromID)) {
+    const getRequest = (request: { fromUsername: string; fromID: number }) => {
+      setRequests((prev) => {
+        // if we already have request, return same list
+        if (prev.find((req) => req.ID === request.fromID)) {
           return prev;
         }
-        return [...prev, { ID: request.fromID, userName: request.fromUsername }];
+        // if we dont already have request, add it to list
+        return [
+          ...prev,
+          { ID: request.fromID, userName: request.fromUsername },
+        ];
       });
     };
 
-    const getAccept = async (newFriend: { fromID: number, fromUsername: string }) => {
+    const getAccept = async (newFriend: {
+      fromID: number;
+      fromUsername: string;
+    }) => {
+      // add the person to friend list
       const avatarID = await getAvatarID(newFriend.fromID);
-      setFriendList(prev => [...prev, { ID: newFriend.fromID, userName: newFriend.fromUsername, avatarID }]);
+      setFriendList((prev) => [
+        ...prev,
+        {
+          ID: newFriend.fromID,
+          userName: newFriend.fromUsername,
+          avatarID: avatarID,
+        },
+      ]);
+      // removing that guy from requests
+      // (suppose u sent him request, he sent u request, he accepted ur request, his request in ur screen should be removed)
+      const newRequests = requests.filter((req) => req.ID !== newFriend.fromID);
+      setRequests(() => newRequests);
     };
 
     const RemovedFriend = (id: number) => {
-      const newFriendsList = friendList.filter(friend => friend.ID !== id);
-      setFriendList(newFriendsList);
+      // filtering that friend out
+      const newFriendsList = friendList.filter((friend) => friend.ID !== id);
+      setFriendList(() => newFriendsList);
     };
 
-    socket?.on('receive-friend-request', getRequest);
-    socket?.on('accepted-friend-request', getAccept);
-    socket?.on('removed-friend', RemovedFriend);
+    socket?.on("receive-friend-request", getRequest);
+    socket?.on("accepted-friend-request", getAccept);
+    socket?.on("removed-friend", RemovedFriend);
 
     return () => {
-      socket?.off('receive-friend-request', getRequest);
-      socket?.off('accepted-friend-request', getAccept);
-      socket?.off('removed-friend', RemovedFriend);
+      socket?.off("receive-friend-request", getRequest);
+      socket?.off("accepted-friend-request", getAccept);
+      socket?.off("removed-friend", RemovedFriend);
     };
   }, [socket]);
 
@@ -113,7 +149,7 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
         <input
           type="text"
           value={sendRequestText}
-          onChange={e => setSendRequestText(e.target.value)}
+          onChange={(e) => setSendRequestText(e.target.value)}
           placeholder="Add friend by username..."
           className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         />
@@ -121,11 +157,26 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
 
       <div className="p-3 max-h-36 overflow-y-auto bg-gray-50">
         {requests.map((request, index) => (
-          <div key={index} className="mb-2 last:mb-0 text-sm flex justify-between items-center">
-            <span className="text-blue-700 font-medium">{request.userName}</span>
+          <div
+            key={index}
+            className="mb-2 last:mb-0 text-sm flex justify-between items-center"
+          >
+            <span className="text-blue-700 font-medium">
+              {request.userName}
+            </span>
             <div className="space-x-1">
-              <button onClick={() => acceptRequest(request)} className="text-green-600 hover:underline">Accept</button>
-              <button onClick={() => deleteRequest(request.ID)} className="text-red-600 hover:underline">Delete</button>
+              <button
+                onClick={() => acceptRequest(request)}
+                className="text-green-600 hover:underline"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => deleteRequest(request.ID)}
+                className="text-red-600 hover:underline"
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
@@ -147,8 +198,18 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
               {friend.userName}
             </div>
             <div className="flex gap-1">
-              <button className="text-green-500 hover:text-green-700 text-md hover:font-bold" onClick={() => gotoProfile(friend.ID)}>profile</button>
-              <button className="text-red-500 hover:text-red-700 text-md hover:font-bold" onClick={() => removeFriend(friend.ID)}>unfriend</button>
+              <button
+                className="text-green-500 hover:text-green-700 text-md hover:font-bold"
+                onClick={() => gotoProfile(friend.ID)}
+              >
+                profile
+              </button>
+              <button
+                className="text-red-500 hover:text-red-700 text-md hover:font-bold"
+                onClick={() => removeFriend(friend.ID)}
+              >
+                unfriend
+              </button>
             </div>
           </div>
         ))}
