@@ -37,7 +37,7 @@ export async function getGameLeaderboard(gameId: number) {
   return await res.json(); // returns array of { Username, Score }
 }
 
-export async function topThreeinGame(userID: number): Promise<string[]> {
+export async function topInGame(userID: number): Promise<string[]> {
   const result: string[] = [];
 
   try {
@@ -47,7 +47,7 @@ export async function topThreeinGame(userID: number): Promise<string[]> {
       const leaderboard = await getGameLeaderboard(game.GameID); // Fetch leaderboard for each game
 
       console.log(leaderboard + "pmo2");
-      const topThree = leaderboard.slice(0, 3); // Take top 3
+      const topThree = leaderboard.slice(0, 1); // Take top 3
       console.log(topThree)
       const isUserInTopThree = topThree.some((entry : any) => entry.ID === userID);
 
@@ -58,7 +58,7 @@ export async function topThreeinGame(userID: number): Promise<string[]> {
     console.log(result);
     return result;
   } catch (error) {
-    console.error('Error in topThreeinGame:', error);
-    throw new Error('Failed to check top 3 positions');
+    console.error('Error in topInGame:', error);
+    throw new Error('Failed to check top position(s)');
   }
 }

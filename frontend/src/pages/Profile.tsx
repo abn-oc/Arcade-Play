@@ -7,7 +7,7 @@ import {
   editBio,
   changeAvatar, // Add this import
 } from "../services/authService";
-import { topThreeinGame } from "../services/leaderboardService";
+import { topInGame } from "../services/leaderboardService";
 
 export default function Profile() {
 
@@ -31,8 +31,8 @@ export default function Profile() {
       setNewUsername(data.Username);
       setNewBio(data.Bio || ""); // Assuming the bio is in the profile data
 
-      // Fetch top 3 games for badge
-      const topGames = await topThreeinGame(data.ID);
+      // Fetch top games for badge
+      const topGames = await topInGame(data.ID);
       setTopThreeGames(topGames);
     } catch (err) {
       setMessage((err as Error).message);
@@ -162,7 +162,7 @@ export default function Profile() {
         Update Username
       </button>
 
-      {profile.AuthProvider === null && (
+      {profile.AuthProvider === "email" && (
         <>
           <hr />
           <h3>Change Password</h3>

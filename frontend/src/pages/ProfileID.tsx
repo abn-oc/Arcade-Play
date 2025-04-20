@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
   getProfileID,
 } from "../services/friendService";
-import { topThreeinGame } from "../services/leaderboardService"; // adjust path if needed
+import { topInGame } from "../services/leaderboardService"; // adjust path if needed
 import { useParams } from "react-router-dom";
 
 export default function ProfileID() {
@@ -29,7 +29,7 @@ export default function ProfileID() {
       console.log("AaaaaaaaaA");
       setProfile(data);
       // Fetch top 3 games for badge
-      const topGames = await topThreeinGame(data.ID);
+      const topGames = await topInGame(data.ID);
       setTopThreeGames(topGames);
       console.log(topGames);
     } catch (err) {
