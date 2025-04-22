@@ -363,12 +363,29 @@ authRoutes.post(
     try {
       const pool = await connectDB();
 
-      // this query is not good
-      await pool.request().input("ID", sql.Int, req.user?.id).query(`
-        UPDATE Users
-        SET GamesPlayed = ISNULL(GamesPlayed, 0) + 1
-        WHERE ID = @ID AND IsDeleted = 0
-      `);
+      // getting current games played
+      const result = await pool.request()
+        .input("ID", sql.Int, req.user.id)
+        .query(`
+          SELECT GamesPlayed FROM Users
+          WHERE ID = @ID AND IsDeleted = 0
+        `);
+
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const currentGamesPlayed = result.recordset[0].GamesPlayed;
+
+      // update it with + 1
+      await pool.request()
+        .input("ID", sql.Int, req.user.id)
+        .input("NewCount", sql.Int, currentGamesPlayed + 1)
+        .query(`
+          UPDATE Users
+          SET GamesPlayed = @NewCount
+          WHERE ID = @ID AND IsDeleted = 0
+        `);
 
       res.json({ message: "GamesPlayed incremented successfully" });
     } catch (err) {
@@ -377,6 +394,7 @@ authRoutes.post(
     }
   }
 );
+
 
 // edit bio route
 authRoutes.patch(

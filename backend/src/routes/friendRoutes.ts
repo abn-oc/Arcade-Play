@@ -57,35 +57,46 @@ friendRoutes.post(
     try {
       const pool = await connectDB();
 
-      // Get all friendships involving the user
+      // getting all friendships
       const friendsResult = await pool
         .request()
         .input("UserID", sql.Int, userId).query(`
-          SELECT * FROM Friends 
-          WHERE UserID = @UserID OR FriendID = @UserID
-        `);
+        SELECT * FROM Friends 
+        WHERE UserID = @UserID OR FriendID = @UserID
+      `);
 
-      // get the id in each row that is NOT the userID in an array
-      const friendIds = friendsResult.recordset.map((row) =>
+      // getting just ids that arent user's id
+      const friendIds: number[] = friendsResult.recordset.map((row) =>
         row.UserID === userId ? row.FriendID : row.UserID
       );
 
-      // if u got no friends XD
       if (friendIds.length === 0) {
         return res.status(200).json([]);
       }
 
-      // getting usernames of all friends
-      const idsList = friendIds.join(","); // create comma-separated list
-      const userQuery = await pool.request().query(`
-        SELECT ID, Username, Avatar, isDeleted FROM Users WHERE ID IN (${idsList})
-      `);
+      // preparing request for those friend ids but in sql parameters
+      const request = pool.request();
+      friendIds.forEach((id, idx) => {
+        request.input(`id${idx}`, sql.Int, id);
+      });
+
+      // added commans in them
+      const inClause = friendIds.map((_, idx) => `@id${idx}`).join(",");
+
+      // now query
+      const userQuery = await request.query(`
+      SELECT ID, Username, Avatar, isDeleted FROM Users 
+      WHERE ID IN (${inClause})
+    `);
+
+      // making array of ids and usernames from result
       const friends = userQuery.recordset
         .filter((user) => user.isDeleted !== true)
         .map((user) => ({
           id: user.ID,
           username: user.Username,
         }));
+
       res.status(200).json(friends);
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
