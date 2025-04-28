@@ -88,7 +88,7 @@ CONSTRAINT FK_FriendRequests2 FOREIGN KEY (SenderID) REFERENCES Users(ID)
 create table GlobalChat
 (
 SenderID int not null,
-Text varchar(255),
+Text nvarchar(255),
 CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
 
