@@ -83,6 +83,7 @@ create table FriendRequests
 SenderID int not null,
 ReceiverID int not null,
 CONSTRAINT FK_FriendRequests1 FOREIGN KEY (ReceiverID) REFERENCES Users(ID),
+CONSTRAINT PK_FriendRequests PRIMARY KEY (SenderID, ReceiverID),
 CONSTRAINT FK_FriendRequests2 FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
 create table GlobalChat
@@ -95,7 +96,7 @@ CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 
 --//New quries return msg with avatar and username
 select U.ID,U.FirstName,U.Avatar,Text
-from GlobelChat G left join Users U on G.SenderID=U.ID
+from GlobalChat G left join Users U on G.SenderID=U.ID
 
 
 --//New trigger delete all previous msg if count(*) of GlobleChat>15
@@ -107,15 +108,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @TotalMessages INT;
-    SELECT @TotalMessages = COUNT(*) FROM GlobalChat;
-
-    IF @TotalMessages > 15
+    WHILE (SELECT COUNT(*) FROM GlobalChat) > 15
     BEGIN
         DELETE TOP (1)
         FROM GlobalChat
-        ORDER BY MessageTime ASC
+        ORDER BY MessageTime ASC;
     END
 END;
+
 
 
