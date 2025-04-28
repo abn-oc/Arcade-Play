@@ -1,3 +1,4 @@
+
 create database projectDB
 use projectDB;
 go
@@ -108,13 +109,40 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Delete the oldest message(s) if there are more than 15
     WHILE (SELECT COUNT(*) FROM GlobalChat) > 15
     BEGIN
-        DELETE TOP (1)
-        FROM GlobalChat
-        ORDER BY MessageTime ASC;
+        ;WITH CTE AS (
+            SELECT TOP (1) *
+            FROM GlobalChat
+            ORDER BY MessageTime ASC
+        )
+        DELETE FROM CTE;
     END
 END;
 
+-- Insert User 1 into Users table
+INSERT INTO Users 
+(FirstName, LastName, Email, Passwords, Username, Avatar, GamesPlayed, IsDeleted, AuthProvider, ProviderUserID, Bio)
+VALUES 
+('John', 'Doe', 'johndoe@example.com', 'Password123', 'JohnDoe', 1, 5, 0, NULL, NULL, 'Excited to play!');
 
 
+-- Insert 16 sample messages into GlobalChat
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 1');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 2');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 3');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 4');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 5');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 6');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 7');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 8');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 9');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 10');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 11');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 12');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 13');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 14');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 15');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 16');
+select * from GlobalChat
