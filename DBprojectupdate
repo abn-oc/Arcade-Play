@@ -91,6 +91,9 @@ SenderID int not null,
 Text nvarchar(255),
 CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
+ALTER TABLE GlobalChat
+ADD MessageTime DATETIME DEFAULT GETDATE();
+
 
 --//New quries return msg with avatar and username
 select U.ID,U.FirstName,U.Avatar,Text
@@ -111,7 +114,10 @@ BEGIN
 
     IF @TotalMessages > 15
     BEGIN
-        Truncate table GlobalChat;
+        DELETE TOP (1)
+        FROM GlobalChat
+        ORDER BY MessageTime ASC
     END
 END;
+
 
