@@ -93,7 +93,7 @@ CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
 
 --//New quries return msg with avatar and username
-select U.FirstName,U.Avatar,Text
+select U.ID,U.FirstName,U.Avatar,Text
 from GlobelChat G left join Users U on G.SenderID=U.ID
 
 
