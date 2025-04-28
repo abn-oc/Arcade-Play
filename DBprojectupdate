@@ -89,11 +89,9 @@ create table GlobalChat
 (
 SenderID int not null,
 Text nvarchar(255),
+MessageTime DATETIME DEFAULT GETDATE(),
 CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
-ALTER TABLE GlobalChat
-ADD MessageTime DATETIME DEFAULT GETDATE();
-
 
 --//New quries return msg with avatar and username
 select U.ID,U.FirstName,U.Avatar,Text
