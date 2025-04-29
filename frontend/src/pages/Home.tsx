@@ -67,6 +67,7 @@ export default function Home() {
         <FriendList selFriend={selFriend} />
         <FriendChat
           friend={selectedFriend}
+          close={() => setSelectedFriend(null)}
         />
       </div>
 

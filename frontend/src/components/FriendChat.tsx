@@ -6,7 +6,7 @@ import {
 } from "../services/friendService";
 import { Friend, PrivateMessage } from "../types/types";
 
-export default function FriendChat({ friend }: { friend: Friend | null }) {
+export default function FriendChat({ friend, close }: { friend: Friend | null, close: any }) {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
