@@ -68,7 +68,6 @@ export const getPrivateMessages = async (
       senderId: msg.SenderID,
       content: msg.Content,
     }));
-
     return messages;
   } catch (error) {
     console.error("Error fetching private messages:", error);

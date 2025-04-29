@@ -41,6 +41,7 @@ export default function FriendChat({ friend }: { friend: Friend | null }) {
         friend?.id
       );
       setMsgs(msgs);
+      console.log(msgs);
     }
     setMsgText("");
   }
@@ -67,6 +68,14 @@ export default function FriendChat({ friend }: { friend: Friend | null }) {
         messagesContainerRef.current.scrollHeight;
     }
   }, [msgs]);
+
+  function getUsername(msg: PrivateMessage) {
+    if (user && friend && msg) {
+      console.log(msg.senderId);
+      if (msg.senderId === user.ID) return user.Username;
+      else return friend.username;
+    }
+  }
 
   return (
     <>
@@ -97,14 +106,16 @@ export default function FriendChat({ friend }: { friend: Friend | null }) {
             className="p-3 max-h-39 overflow-y-auto bg-gray-50"
             ref={messagesContainerRef}
           >
-            {msgs.map((msg, index) => (
-              <div key={index} className="mb-2 last:mb-0">
-                <span className="font-semibold text-blue-700">
-                  {friend.username}:
-                </span>
-                <span className="ml-1 text-gray-800">{msg.content}</span>
-              </div>
-            ))}
+            {user &&
+              msgs.map((msg, index) => (
+                <div key={index} className="mb-2 last:mb-0">
+                  <span className="font-semibold text-blue-700">
+                    {/* {msg.senderID == user.ID ? user.Username : friend.username}: */}
+                    {getUsername(msg)}
+                  </span>
+                  <span className="ml-1 text-gray-800">{msg.content}</span>
+                </div>
+              ))}
           </div>
 
           {/* Input form */}

@@ -17,8 +17,8 @@ export type Friend = {
 
 // for avatars, use the avatar of the selected friend
 export type PrivateMessage = {
-    senderID: number;
-    receiverID: number;
+    senderId: number;
+    receiverId: number;
     content: string;
 }
 
