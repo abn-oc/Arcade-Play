@@ -23,10 +23,10 @@ export type PrivateMessage = {
 }
 
 export type GlobalMessage = {
-    id: number;
-    username: string;
-    avatar: number;
-    content: string;
+    SenderID: number;
+    Username: string;
+    Avatar: number;
+    Content: string;
 }
 
 export type Game = {

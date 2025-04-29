@@ -1,9 +1,23 @@
 
+-- use this if dropping normally doesnt work
+ALTER DATABASE projectDB
+SET SINGLE_USER
+WITH ROLLBACK IMMEDIATE;
+
+DROP DATABASE projectDB;
+--end
+
+use master;
+go
+drop database projectDB
+go
+
 create database projectDB
+go
 use projectDB;
 go
-drop table GlobalChat
-drop table FriendRequests
+drop table if exists GlobalChat
+drop table if exists FriendRequests
 DROP TABLE IF EXISTS PrivateMessages;
 DROP TABLE IF EXISTS Friends;
 DROP TABLE IF EXISTS LeaderBoard;
@@ -24,8 +38,6 @@ CREATE TABLE Users (
 	AuthProvider NVARCHAR(50) NULL,
     ProviderUserID NVARCHAR(255) NULL,
 	Bio NVARCHAR(255) NULL DEFAULT ('Hey there, I am using ArcadePlay'),
-
-	CONSTRAINT UQ_ProviderUserID UNIQUE (AuthProvider, ProviderUserID)
 );
 
 CREATE TABLE Friends (
@@ -90,13 +102,13 @@ CONSTRAINT FK_FriendRequests2 FOREIGN KEY (SenderID) REFERENCES Users(ID)
 create table GlobalChat
 (
 SenderID int not null,
-Text nvarchar(255),
+Content nvarchar(255),
 MessageTime DATETIME DEFAULT GETDATE(),
 CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
 )
 
 --//New quries return msg with avatar and username
-select U.ID,U.FirstName,U.Avatar,Text
+select U.ID,U.FirstName,U.Avatar, Content
 from GlobalChat G left join Users U on G.SenderID=U.ID
 
 
@@ -129,20 +141,10 @@ VALUES
 
 
 -- Insert 16 sample messages into GlobalChat
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 1');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 2');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 3');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 4');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 5');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 6');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 7');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 8');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 9');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 10');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 11');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 12');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 13');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 14');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 15');
-INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 16');
+INSERT INTO GlobalChat (SenderID, Content) VALUES (1, 'Hello World 1');
 select * from GlobalChat
+
+
+select * from users;
+select * from GlobalChat;
+delete GlobalChat;

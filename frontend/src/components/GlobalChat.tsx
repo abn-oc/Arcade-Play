@@ -1,38 +1,34 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { userContext } from "../contexts/userContext";
+import { GlobalMessage } from "../types/types";
+import { getMessages, sendMessage } from "../services/globalchatService";
 
 export default function GlobalChat() {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
-  const [globalMsgs, setGlobalMsgs] = useState<
-    { username: string; content: string }[]
-  >([]);
+  const [globalMsgs, setGlobalMsgs] = useState<GlobalMessage[]>([]);
   const [globalMsgText, setGlobalMsgText] = useState("");
 
   // to scroll the chat we need a reference to an html div
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // emits signal with msg
-  const sendGlobalMsg = (e: any) => {
+  // emits signal after uploading to db
+  const sendGlobalMsg = async (e: any) => {
     e.preventDefault();
-    if (globalMsgText.trim()) {
-      if (socket && user)
-        socket?.emit("globalMessage", {
-          username: user?.Username,
-          content: globalMsgText,
-        });
+    if (user && socket && globalMsgText.trim()) {
+      await sendMessage(user.ID, globalMsgText);
+      socket.emit("globalMessage");
       setGlobalMsgText("");
     }
   };
 
-  // realtime msg receiving signal and updating globalMsgs state
+  // receiving signal and fetching globalMsgs
   useEffect(() => {
-    function updateMsgs(msg: { username: string; content: string }) {
-      setGlobalMsgs((prev) => [
-        ...prev,
-        { username: msg.username, content: msg.content },
-      ]);
+    async function updateMsgs() {
+      const msgs: GlobalMessage[] = await getMessages();
+      console.log(msgs);
+      setGlobalMsgs(msgs);
     }
 
     if (socket) socket.on("globalMessage", updateMsgs);
@@ -41,6 +37,16 @@ export default function GlobalChat() {
       if (socket) socket.off("globalMessage", updateMsgs);
     };
   }, [socket]);
+
+  // fetch on mounting of component
+  useEffect(() => {
+    async function updateMsgs() {
+      const msgs: GlobalMessage[] = await getMessages();
+      console.log(msgs);
+      setGlobalMsgs(msgs);
+    }
+    updateMsgs()
+  }, []);
 
   // it scrolls down the chat whenever globalMsgs state changes
   useEffect(() => {
@@ -65,8 +71,9 @@ export default function GlobalChat() {
       >
         {globalMsgs.map((msg, index) => (
           <div key={index} className="mb-2 last:mb-0">
-            <span className="font-semibold text-blue-700">{msg.username}:</span>
-            <span className="ml-1 text-gray-800">{msg.content}</span>
+            <img src={`assets/avatars/${msg.Avatar}.jpg`} className="w-8 rounded-full inline mr-2" />
+            <span className="font-semibold text-blue-700">{msg.Username}:</span>
+            <span className="ml-1 text-gray-800">{msg.Content}</span>
           </div>
         ))}
       </div>
