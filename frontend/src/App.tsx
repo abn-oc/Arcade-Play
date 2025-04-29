@@ -61,7 +61,7 @@ export default function App() {
                   alt="User avatar"
                   className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                 />
-                <div className="hidden md:block">
+                <div className="md:block">
                   <p className="font-medium">{user.Username}</p>
                   <p className="text-xs text-blue-100">{user.Email}</p>
                 </div>

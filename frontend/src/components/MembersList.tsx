@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { getUserScore } from "../services/leaderboardService";
 import { Friend } from "../types/types";
+import { getAvatarID } from "../services/friendService";
 
 // the members array passed to this component already have id and username
-export default function MembersList({ members }: { members: Friend[] }) {
+export default function MembersList({ members }: { members: {
+  avatar: number; id: number; username: string 
+}[] }) {
   const [scoreList, setScoreList] = useState<{ Score: number }[]>([]);
-
+  const [avatars, setAvatars] = useState<number[]>([]);
 
   // on members changing, fetch scores avatars and set them (we already have id and username)
   useEffect(() => {
@@ -14,6 +17,12 @@ export default function MembersList({ members }: { members: Friend[] }) {
       const scores = await Promise.all(
         members.map((member) => getUserScore(member.id, 1))
       );
+      setScoreList(scores);
+      // for every member,fetch avatarid and set avatar
+      members.forEach(async (member) => {
+        const newAvatar = await getAvatarID(member.id);
+        setAvatars((prev) => [...prev, newAvatar]);
+      });
       setScoreList(scores);
     }
 
@@ -35,7 +44,7 @@ export default function MembersList({ members }: { members: Friend[] }) {
           <div key={member.id} className="mb-2 last:mb-0">
             <span className="font-semibold text-blue-700 flex flex-row gap-2 items-center">
               <img
-                src={`/assets/avatars/${member.avatar}.jpg`}
+                src={`/assets/avatars/${avatars[index]}.jpg`}
                 className="w-12 rounded-full"
               />
               {member.username} —{" "}

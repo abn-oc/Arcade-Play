@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import MembersList from "../components/MembersList";
 import { getUserScore, updateUserScore } from "../services/leaderboardService";
 import { incrementGamesPlayed } from "../services/authService";
+import { Friend } from "../types/types";
 
 export default function TicTacToe() {
   // getting room code from url (0 if room should be created)
@@ -17,10 +18,7 @@ export default function TicTacToe() {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
-  const [selectedFriend, setSelectedFriend] = useState<{
-    ID: number;
-    userName: string;
-  } | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [roomMembers, setRoomMembers] = useState<
     { ID: number; userName: string }[]
   >([]);
@@ -40,13 +38,13 @@ export default function TicTacToe() {
     navigate("/home");
   }
 
-  function selFriend(id: number, username: string) {
-    setSelectedFriend({ ID: id, userName: username });
+  function selFriend(friend: Friend) {
+    setSelectedFriend(friend);
   }
 
   useEffect(() => {
-    function openDms(ID: number, userName: string) {
-      setSelectedFriend({ ID, userName });
+    function openDms(friend: Friend) {
+      setSelectedFriend(friend);
     }
 
     socket?.on("receive-pm", openDms);
@@ -201,16 +199,12 @@ export default function TicTacToe() {
         <FriendList selFriend={selFriend} />
         {selectedFriend && (
           <FriendChat
-            friend={{
-              ID: selectedFriend.ID,
-              userName: selectedFriend.userName,
-            }}
+            friend={selectedFriend}
             close={() => setSelectedFriend(null)}
-            closable={true}
           />
         )}
         <GlobalChat />
-        <MembersList members={roomMembers} />
+        <MembersList members={roomMembers.map(mmbr => ({id: mmbr.ID, username: mmbr.userName, avatar: 0}))} />
         <div></div>
       </div>
     </div>

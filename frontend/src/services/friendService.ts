@@ -103,3 +103,13 @@ export const getProfileID = async (id: number): Promise<User> => {
     throw new Error("Network error, please try again");
   }
 };
+
+export const getAvatarID = async (id: number): Promise<number> => {
+  try {
+    const profile = await getProfileID(id);
+    return Number(profile.Avatar) ?? 0; // Return 0 if Avatar is null
+  } catch (error: any) {
+    console.error("Failed to get avatar by ID:", error);
+    throw new Error("Could not retrieve avatar");
+  }
+};
