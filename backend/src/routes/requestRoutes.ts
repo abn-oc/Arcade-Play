@@ -3,7 +3,6 @@ import sql from "mssql";
 import { connectDB } from "../config/db";
 const requestRoutes = express.Router();
 
-// POST /friend-request/add - Add a new friend request
 requestRoutes.post(
   "/add",
   async (req: Request, res: Response): Promise<any> => {
@@ -12,7 +11,7 @@ requestRoutes.post(
     try {
       const pool = await connectDB();
 
-      // Query the database to find the receiver's ID based on the username
+      // get id of receiver from username
       const result = await pool
         .request()
         .input("receiverUsername", sql.NVarChar, receiverUsername).query(`
@@ -27,7 +26,7 @@ requestRoutes.post(
 
       const receiverID = result.recordset[0].ID;
 
-      // Check if the sender and receiver are already friends
+      // already friends?
       const existingFriendship = await pool
         .request()
         .input("senderID", sql.Int, senderID)
@@ -42,7 +41,7 @@ requestRoutes.post(
           .json({ success: false, message: "You are already friends" });
       }
 
-      // Check if a friend request already exists between the sender and receiver
+      // already friend request exists?
       const existingRequest = await pool
         .request()
         .input("senderID", sql.Int, senderID)
@@ -58,7 +57,7 @@ requestRoutes.post(
           .json({ success: false, message: "Friend request already exists" });
       }
 
-      // Insert the friend request into the FriendRequests table
+      // inserting req in db
       await pool
         .request()
         .input("senderID", sql.Int, senderID)
@@ -75,7 +74,6 @@ requestRoutes.post(
   }
 );
 
-// POST /friend-request/remove - Remove a friend request
 requestRoutes.post("/remove", async (req: Request, res: Response) => {
   const { senderID, receiverID } = req.body;
 
@@ -96,14 +94,12 @@ requestRoutes.post("/remove", async (req: Request, res: Response) => {
   }
 });
 
-// GET /friend-requests/:userID - Fetch all friend requests for a given user, including sender's username and avatar
 requestRoutes.post("/requests", async (req: Request, res: Response) => {
   const { userID } = req.body;
 
   try {
     const pool = await connectDB();
 
-    // Fetch all friend requests where the user is the receiver, along with sender's username and avatar
     const result = await pool.request().input("userID", sql.Int, userID).query(`
         SELECT 
           FR.SenderID,

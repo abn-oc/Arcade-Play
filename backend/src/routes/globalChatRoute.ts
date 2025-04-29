@@ -3,8 +3,6 @@ import sql from "mssql";
 import { connectDB } from "../config/db";
 const router = express.Router();
 
-// Example: Get all global chat messages
-// POST /send - Save a new message
 router.post("/send", async (req: Request, res: Response) => {
   const { userId, content } = req.body;
   try {
@@ -23,7 +21,6 @@ router.post("/send", async (req: Request, res: Response) => {
   }
 });
 
-// GET /messages - Fetch latest 15 messages with avatar and username
 router.get("/messages", async (req: Request, res: Response) => {
   try {
     const pool = await connectDB();

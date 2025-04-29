@@ -91,12 +91,12 @@ export default function App() {
                 </button>
 
                 {/* Debug Button - Consider hiding in production */}
-                <button
+                {/* <button
                   className="px-2 py-1 text-xs bg-gray-700 rounded hover:bg-gray-600 transition-colors ml-2"
                   onClick={() => console.log(user)}
                 >
                   Debug
-                </button>
+                </button> */}
               </div>
             </>
           ) : (

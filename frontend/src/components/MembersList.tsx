@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { getUserScore } from "../services/leaderboardService";
-import { Friend } from "../types/types";
 import { getAvatarID } from "../services/friendService";
 
 // the members array passed to this component already have id and username

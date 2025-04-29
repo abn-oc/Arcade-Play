@@ -110,7 +110,6 @@ export default function FriendChat({ friend, close }: { friend: Friend | null, c
               msgs.map((msg, index) => (
                 <div key={index} className="mb-2 last:mb-0">
                   <span className="font-semibold text-blue-700">
-                    {/* {msg.senderID == user.ID ? user.Username : friend.username}: */}
                     {getUsername(msg)}:
                   </span>
                   <span className="ml-1 text-gray-800">{msg.content}</span>

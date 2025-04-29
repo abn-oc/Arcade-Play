@@ -60,9 +60,9 @@ export default function Home() {
     <div className="p-4 flex flex-row gap-4">
       {/* Column 1 */}
       <div className="flex flex-col gap-4">
-        <button className="m-1 p-1 border" onClick={() => console.log(user)}>
+        {/* <button className="m-1 p-1 border" onClick={() => console.log(user)}>
           log home
-        </button>
+        </button> */}
         <GlobalChat />
         <FriendList selFriend={selFriend} />
         <FriendChat
