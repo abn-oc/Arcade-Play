@@ -204,7 +204,13 @@ export default function TicTacToe() {
           />
         )}
         <GlobalChat />
-        <MembersList members={roomMembers.map(mmbr => ({id: mmbr.ID, username: mmbr.userName, avatar: 0}))} />
+        <MembersList
+          members={roomMembers.map((mmbr) => ({
+            id: mmbr.ID,
+            username: mmbr.userName,
+            avatar: 0,
+          }))}
+        />
         <div></div>
       </div>
     </div>

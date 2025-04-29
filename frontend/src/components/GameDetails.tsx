@@ -97,7 +97,10 @@ export default function GameDetails({ id }: { id: number }) {
               key={index}
               className="flex justify-between p-2 gap-8 border-b border-gray-300 rounded"
             >
-              <img src={`assets/avatars/${entry.Avatar}.jpg`} className="w-12" />
+              <img
+                src={`assets/avatars/${entry.Avatar}.jpg`}
+                className="w-12"
+              />
               <span className="font-medium">{entry.Username}</span>
               <span className="text-gray-600">{entry.Score}</span>
             </li>
