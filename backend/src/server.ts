@@ -118,12 +118,12 @@ io.on("connection", (socket) => {
     if (targetsocketID) io.to(targetsocketID).emit("removed-friend", fromID);
   });
 
-  socket.on("send-pm", (friendID, userID, userName) => {
+  socket.on("send-pm", (from, to) => {
     const targetsocketID = onlineUsers.find(
-      (user) => user.ID === friendID
+      (user) => user.ID === to.id
     )?.socketID;
     if (targetsocketID)
-      io.to(targetsocketID).emit("receive-pm", userID, userName);
+      io.to(targetsocketID).emit("receive-pm", from);
   });
 
   socket.on("create-room-tictactoe", (userID) => {

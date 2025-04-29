@@ -4,25 +4,13 @@ import {
   getPrivateMessages,
   sendPrivateMessage,
 } from "../services/friendService";
+import { Friend, PrivateMessage } from "../types/types";
 
-// i made props of close function and closable because initial plan was to use this component
-// to make a un-close-able chat with the other player during game
-// but later decided to keep this chat same as home in game
-interface FriendChatProps {
-  friend: { ID: number; userName: string } | null;
-  close: () => void;
-  closable: boolean;
-}
-
-export default function FriendChat({
-  friend,
-  close,
-  closable,
-}: FriendChatProps) {
+export default function FriendChat({ friend }: { friend: Friend | null }) {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
 
-  const [msgs, setMsgs] = useState<{ userName: string; content: string }[]>([]);
+  const [msgs, setMsgs] = useState<PrivateMessage[]>([]);
   const [msgText, setMsgText] = useState<string>("");
 
   // this is used to scroll down on msgs state changing
@@ -31,18 +19,28 @@ export default function FriendChat({
   async function sendMsg(e: any) {
     e.preventDefault();
     //add msg to db
-    if (user && friend) await sendPrivateMessage(user?.ID, friend?.ID, msgText);
+    if (user && friend) await sendPrivateMessage(user?.ID, friend?.id, msgText);
     //emit signal for other person to fetch
-    socket?.emit("send-pm", friend?.ID, user?.ID, user?.Username);
+    if (friend && user) {
+      const to: Friend = {
+        id: friend.id,
+        username: friend.username,
+        avatar: Number(friend.avatar),
+      };
+      const from: Friend = {
+        id: user.ID,
+        username: user.Username,
+        avatar: Number(user.Avatar),
+      };
+      socket?.emit("send-pm", from, to);
+    }
     //update local msgs state
     if (user && friend) {
-      const msgs = await getPrivateMessages(user?.ID, friend?.ID);
-      setMsgs(
-        msgs.map((msg) => ({
-          userName: msg.senderId == user?.ID ? user?.Username : friend.userName,
-          content: msg.content,
-        }))
+      const msgs: PrivateMessage[] = await getPrivateMessages(
+        user?.ID,
+        friend?.id
       );
+      setMsgs(msgs);
     }
     setMsgText("");
   }
@@ -53,14 +51,11 @@ export default function FriendChat({
   useEffect(() => {
     (async () => {
       if (user && friend) {
-        const msgs = await getPrivateMessages(user?.ID, friend?.ID);
-        setMsgs(
-          msgs.map((msg) => ({
-            userName:
-              msg.senderId == user?.ID ? user?.Username : friend.userName,
-            content: msg.content,
-          }))
+        const msgs: PrivateMessage[] = await getPrivateMessages(
+          user?.ID,
+          friend?.id
         );
+        setMsgs(msgs);
       }
     })();
   }, [friend]);
@@ -78,17 +73,23 @@ export default function FriendChat({
       {friend && (
         <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
           {/* Header */}
-          <div className="bg-blue-900 text-white p-3 font-medium flex items-center">
-            <span className="text-lg">Chat with {friend.userName}</span>
-            <span className="ml-2 text-xl">💬</span>
-            {closable && (
-              <span
-                onClick={close}
-                className="ml-auto mr-2 cursor-pointer hover:text-sm"
-              >
-                X
-              </span>
-            )}
+          <div className="bg-blue-900 text-white p-3 font-medium flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src={`assets/avatars/${friend.avatar}.jpg`}
+                className="w-10 h-10 rounded-full object-cover"
+                alt={`${friend.username}'s avatar`}
+              />
+              <span className="text-lg">Chat with {friend.username}</span>
+              <span className="text-xl">💬</span>
+            </div>
+            <button
+              onClick={close}
+              className="text-lg px-2 py-1 hover:bg-blue-800 rounded transition-colors"
+              aria-label="Close chat"
+            >
+              ✕
+            </button>
           </div>
 
           {/* Messages container */}
@@ -99,7 +100,7 @@ export default function FriendChat({
             {msgs.map((msg, index) => (
               <div key={index} className="mb-2 last:mb-0">
                 <span className="font-semibold text-blue-700">
-                  {msg.userName}:
+                  {friend.username}:
                 </span>
                 <span className="ml-1 text-gray-800">{msg.content}</span>
               </div>

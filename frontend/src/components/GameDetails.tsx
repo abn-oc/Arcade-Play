@@ -2,33 +2,22 @@ import { useState, useEffect } from "react";
 import { getGameDetails } from "../services/gameService";
 import { useNavigate } from "react-router-dom";
 import { getGameLeaderboard } from "../services/leaderboardService";
-
-type GameDetails = {
-  GameID: number;
-  GameName: string;
-  Icon: number;
-  GameDesc: string;
-  MinPlayers: number;
-  MaxPlayers: number;
-};
+import { GameDetails as GameDetailsType, LeadboardEntry } from "../types/types";
 
 export default function GameDetails({ id }: { id: number }) {
-  const [game, setGame] = useState<GameDetails | null>(null);
+  const [game, setGame] = useState<GameDetailsType | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const [loading, setLoading] = useState(true);
-  const [leaderBoard, setLeaderBoard] = useState<
-    { Username: string; Score: number }[]
-  >([{ Username: "loading...", Score: -1 }]);
+  const [leaderBoard, setLeaderBoard] = useState<LeadboardEntry[]>([]);
   const navigate = useNavigate();
 
   // fetch details and leaderboard on component mounting (which is mounted when a gameID is selected)
   useEffect(() => {
     const fetchGame = async () => {
       try {
-        const gameDetails = await getGameDetails(id);
-        setGame(gameDetails);
-        const board: { Username: string; Score: number }[] =
-          await getGameLeaderboard(id);
+        const gameInfo: GameDetailsType = await getGameDetails(id);
+        setGame(gameInfo);
+        const board: LeadboardEntry[] = await getGameLeaderboard(id);
         setLeaderBoard(board);
       } catch (error) {
         console.error("Error fetching game details:", error);
@@ -57,7 +46,7 @@ export default function GameDetails({ id }: { id: number }) {
   }
 
   return (
-    <div className="max-w-sm mx-auto p-2 border rounded shadow-lg flex flex-row">
+    <div className="max-w-2lg mx-auto p-2 border rounded shadow-lg flex flex-row">
       <div className="flex flex-col">
         {game ? (
           <>
@@ -65,7 +54,7 @@ export default function GameDetails({ id }: { id: number }) {
             <img
               src={`/assets/${game.Icon}.png`}
               alt={game.GameName}
-              className="w-full h-48 object-cover my-2"
+              className="w-full h-48 object-contain"
             />
             <p className="text-sm text-gray-700">{game.GameDesc}</p>
 
@@ -108,6 +97,7 @@ export default function GameDetails({ id }: { id: number }) {
               key={index}
               className="flex justify-between p-2 gap-8 border-b border-gray-300 rounded"
             >
+              <img src={`assets/avatars/${entry.Avatar}.jpg`} className="w-12" />
               <span className="font-medium">{entry.Username}</span>
               <span className="text-gray-600">{entry.Score}</span>
             </li>

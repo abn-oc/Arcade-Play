@@ -1,19 +1,7 @@
 import axios from "axios";
+import { Game, GameDetails } from "../types/types";
 
 const API_BASE_URL = "http://localhost:3000/games";
-
-// types
-export interface Game {
-  GameID: number;
-  GameName: string;
-  Icon: number;
-}
-
-export interface GameDetails extends Game {
-  GameDesc: string;
-  MinPlayers: number;
-  MaxPlayers: number;
-}
 
 // api calls
 export const getAllGames = async (): Promise<Game[]> => {

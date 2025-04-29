@@ -1,29 +1,7 @@
 import axios from "axios";
+import { Friend, PrivateMessage, User } from "../types/types";
 
 const API_URL = "http://localhost:3000/friends";
-
-// types
-interface Friend {
-  id: number;
-  username: string;
-}
-
-export interface PrivateMessage {
-  senderId: number;
-  receiverId: number;
-  content: string;
-}
-
-interface UserProfile {
-  ID: number;
-  FirstName: string;
-  LastName: string;
-  Email: string;
-  Username: string;
-  Avatar: number | null;
-  AuthProvider: string | null;
-  GamesPlayed: number;
-}
 
 // api calls
 export const addFriend = async (userId: number, friendId: number) => {
@@ -115,24 +93,14 @@ export const sendPrivateMessage = async (
   }
 };
 
-export const getProfileID = async (id: number): Promise<UserProfile> => {
+export const getProfileID = async (id: number): Promise<User> => {
   try {
-    const response = await axios.get<UserProfile>(`${API_URL}/profile/${id}`);
+    const response = await axios.get<User>(`${API_URL}/profile/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(error.response.data.error || "Failed to fetch profile");
     }
     throw new Error("Network error, please try again");
-  }
-};
-
-export const getAvatarID = async (id: number): Promise<number> => {
-  try {
-    const profile = await getProfileID(id);
-    return profile.Avatar ?? 0; // Return 0 if Avatar is null
-  } catch (error: any) {
-    console.error("Failed to get avatar by ID:", error);
-    throw new Error("Could not retrieve avatar");
   }
 };

@@ -1,4 +1,5 @@
 import { getAllGames } from "./gameService";
+import { Game } from "../types/types";
 
 const API_BASE = "http://localhost:3000/leaderboard";
 
@@ -47,7 +48,7 @@ export async function topInGame(userID: number): Promise<string[]> {
 
   try {
     // fetch all games
-    const games = await getAllGames();
+    const games: Game[] = await getAllGames();
     for (const game of games) {
       // fetch leaderboard of each game
       const leaderboard = await getGameLeaderboard(game.GameID);

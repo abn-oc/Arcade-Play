@@ -5,6 +5,7 @@ import FriendList from "../components/FriendList";
 import FriendChat from "../components/FriendChat";
 import { getAllGames } from "../services/gameService";
 import GameDetails from "../components/GameDetails";
+import { Friend, Game } from "../types/types";
 
 export default function Home() {
   const user = useContext(userContext)?.user;
@@ -12,19 +13,14 @@ export default function Home() {
   const socket = useContext(userContext)?.socket;
 
   // which friend private msgs are shown
-  const [selectedFriend, setSelectedFriend] = useState<{
-    ID: number;
-    userName: string;
-  } | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
 
-  const [games, setGames] = useState<
-    { ID: number; gameName: string; icon: number }[]
-  >([]);
+  const [games, setGames] = useState<Game[]>([]);
   // which game's details are shown
   const [selectedGame, setSelectedGame] = useState<number | null>(null);
 
-  function selFriend(id: number, username: string) {
-    setSelectedFriend({ ID: id, userName: username });
+  function selFriend(friend: Friend) {
+    setSelectedFriend(friend);
   }
 
   useEffect(() => {
@@ -41,8 +37,8 @@ export default function Home() {
   // realtime receiving and opening dm of friend
   // ( if dms were already open, this will cause reFetching of msgs in FriendChat )
   useEffect(() => {
-    function openDms(ID: number, userName: string) {
-      setSelectedFriend({ ID: ID, userName: userName });
+    function openDms(friend: Friend) {
+      setSelectedFriend(friend);
     }
 
     socket?.on("receive-pm", openDms);
@@ -55,14 +51,8 @@ export default function Home() {
   // show games on homescreen when its opened
   useEffect(() => {
     (async () => {
-      const games = await getAllGames();
-      setGames(
-        games.map((game) => ({
-          ID: game.GameID,
-          gameName: game.GameName,
-          icon: game.Icon,
-        }))
-      );
+      const games: Game[] = await getAllGames();
+      setGames(games);
     })();
   }, []);
 
@@ -77,8 +67,6 @@ export default function Home() {
         <FriendList selFriend={selFriend} />
         <FriendChat
           friend={selectedFriend}
-          close={() => setSelectedFriend(null)}
-          closable={true}
         />
       </div>
 
@@ -87,17 +75,17 @@ export default function Home() {
         <div className="flex flex-row gap-4 flex-wrap justify-center">
           {games.map((game) => (
             <div
-              key={game.ID}
+              key={game.GameID}
               className="bg-gray-100 rounded-lg p-4 w-40 text-center cursor-pointer hover:bg-gray-200 transition-colors"
-              onClick={() => setSelectedGame(game.ID)}
+              onClick={() => setSelectedGame(game.GameID)}
             >
               <img
-                src={`/assets/${game.icon}.png`}
-                alt={game.gameName}
+                src={`/assets/${game.Icon}.png`}
+                alt={game.GameName}
                 className="w-32 h-32 object-cover mx-auto"
               />
               <p className="mt-2 text-sm font-medium text-gray-700">
-                {game.gameName}
+                {game.GameName}
               </p>
             </div>
           ))}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   changePassword,
   editUsername,
@@ -8,6 +8,7 @@ import {
   changeAvatar,
 } from "../services/authService";
 import { topInGame } from "../services/leaderboardService";
+import { userContext } from "../contexts/userContext";
 
 export default function Profile() {
   const [profile, setProfile] = useState<null | any>(null);
@@ -18,11 +19,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [topThreeGames, setTopThreeGames] = useState<string[]>([]);
-
-  // on component mount
-  useEffect(() => {
-    loadProfile();
-  }, []);
 
   // loads profile from db
   const loadProfile = async () => {
@@ -39,6 +35,15 @@ export default function Profile() {
       setMessage((err as Error).message);
     }
   };
+  
+  //putting this user from context as dependancy in useEffect fixes the reloading issue
+  const user = useContext(userContext)?.user;
+
+  // on component mount
+  useEffect(() => {
+    loadProfile();
+  }, [user]);
+
 
   const handleUsernameChange = async () => {
     try {

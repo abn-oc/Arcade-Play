@@ -6,59 +6,52 @@ import {
   getProfileID,
   removeFriend as RemoveFriend,
 } from "../services/friendService";
-import { getAvatarID } from "../services/friendService";
 import { useNavigate } from "react-router-dom";
+import { Friend, User } from "../types/types";
+import { Socket } from "socket.io-client";
 
 // the selFriend function is used to set the friend whose dms are to be opened in FriendChat
 // its passed as prop from the parent of both to share this state between both
 export default function FriendList({ selFriend }: { selFriend: any }) {
   const navigate = useNavigate();
-  const user = useContext(userContext)?.user;
-  const socket = useContext(userContext)?.socket;
+  const user : User | null | undefined = useContext(userContext)?.user;
+  const socket : Socket | undefined = useContext(userContext)?.socket;
 
   const [sendRequestText, setSendRequestText] = useState<string>("");
   const [friendList, setFriendList] = useState<
-    { ID: number; userName: string; avatarID: number }[]
+    Friend[]
   >([]);
-  const [requests, setRequests] = useState<{ ID: number; userName: string }[]>(
+  const [requests, setRequests] = useState<Friend[]>(
     []
   );
 
   function sendRequest(e: any) {
     e.preventDefault();
-    socket?.emit("send-friend-request", {
-      toUsername: sendRequestText,
-      fromUsername: user?.Username,
-      fromID: user?.ID,
-    });
-    setSendRequestText("");
+    // upload request to db
+    // emit signal for other guy to reFetch
+    // end
   }
 
   function deleteRequest(id: number) {
-    const newReqs = requests.filter((request) => request.ID !== id);
-    setRequests(newReqs);
+    // delete request from db
+    // reFetch
+    // end
   }
 
-  async function acceptRequest(request: { ID: number; userName: string }) {
-    deleteRequest(request.ID);
-    socket?.emit("accept-friend-request", {
-      toID: request.ID,
-      fromID: user?.ID,
-    });
-    if (user) addFriend(user.ID, request.ID);
-
-    const avatarID = await getAvatarID(request.ID);
-    setFriendList((prev) => [
-      ...prev,
-      { ID: request.ID, userName: request.userName, avatarID },
-    ]);
+  async function acceptRequest(id: number) {
+    // delete req from db
+    deleteRequest(id);
+    // upload friendship to db
+    // reFetch own list
+    // emit signal to reFetch
+    // end
   }
 
   function removeFriend(id: number) {
-    if (user) RemoveFriend(id, user?.ID);
-    const newFriendsList = friendList.filter((friend) => friend.ID !== id);
-    setFriendList(newFriendsList);
-    socket?.emit("remove-friend", user?.ID, id);
+    // delete friend from db
+    // emit signal to refetch for other
+    // refetch ur own
+    // end
   }
 
   async function gotoProfile(id: number) {
@@ -72,68 +65,14 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
     (async () => {
       if (user) {
         const friends = await getFriends(user.ID);
-        const enrichedFriends = await Promise.all(
-          friends.map(async (friend) => ({
-            ID: friend.id,
-            userName: friend.username,
-            avatarID: await getAvatarID(friend.id),
-          }))
-        );
-        setFriendList(enrichedFriends);
+        setFriendList(friends);
       }
     })();
   }, [user]);
 
   // Socket handlers
   useEffect(() => {
-    const getRequest = (request: { fromUsername: string; fromID: number }) => {
-      setRequests((prev) => {
-        // if we already have request, return same list
-        if (prev.find((req) => req.ID === request.fromID)) {
-          return prev;
-        }
-        // if we dont already have request, add it to list
-        return [
-          ...prev,
-          { ID: request.fromID, userName: request.fromUsername },
-        ];
-      });
-    };
 
-    const getAccept = async (newFriend: {
-      fromID: number;
-      fromUsername: string;
-    }) => {
-      // add the person to friend list
-      const avatarID = await getAvatarID(newFriend.fromID);
-      setFriendList((prev) => [
-        ...prev,
-        {
-          ID: newFriend.fromID,
-          userName: newFriend.fromUsername,
-          avatarID: avatarID,
-        },
-      ]);
-      // removing that guy from requests
-      // (suppose u sent him request, he sent u request, he accepted ur request, his request in ur screen should be removed)
-      const newRequests = requests.filter((req) => req.ID !== newFriend.fromID);
-      setRequests(() => newRequests);
-    };
-
-    const RemovedFriend = (id: number) => {
-      // filtering out that friend
-      setFriendList((prev) => prev.filter((friend) => friend.ID !== id));
-    };
-
-    socket?.on("receive-friend-request", getRequest);
-    socket?.on("accepted-friend-request", getAccept);
-    socket?.on("removed-friend", RemovedFriend);
-
-    return () => {
-      socket?.off("receive-friend-request", getRequest);
-      socket?.off("accepted-friend-request", getAccept);
-      socket?.off("removed-friend", RemovedFriend);
-    };
   }, [socket]);
 
   return (
@@ -160,17 +99,17 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
             className="mb-2 last:mb-0 text-sm flex justify-between items-center"
           >
             <span className="text-blue-700 font-medium">
-              {request.userName}
+              {request.username}
             </span>
             <div className="space-x-1">
               <button
-                onClick={() => acceptRequest(request)}
+                onClick={() => acceptRequest(request.id)}
                 className="text-green-600 hover:underline"
               >
                 Accept
               </button>
               <button
-                onClick={() => deleteRequest(request.ID)}
+                onClick={() => deleteRequest(request.id)}
                 className="text-red-600 hover:underline"
               >
                 Delete
@@ -184,27 +123,27 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
         {friendList.map((friend, index) => (
           <div
             key={index}
-            onClick={() => selFriend(friend.ID, friend.userName)}
+            onClick={() => selFriend(friend)}
             className="text-sm text-gray-800 py-1 px-2 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-between"
           >
             <div className="flex items-center gap-2">
               <img
-                src={`/assets/avatars/${friend.avatarID}.jpg`}
+                src={`/assets/avatars/${friend.avatar}.jpg`}
                 alt="avatar"
                 className="w-6 h-6 rounded-full object-cover"
               />
-              {friend.userName}
+              {friend.username}
             </div>
             <div className="flex gap-1">
               <button
                 className="text-green-500 hover:text-green-700 text-md hover:font-bold"
-                onClick={() => gotoProfile(friend.ID)}
+                onClick={() => gotoProfile(friend.id)}
               >
                 profile
               </button>
               <button
                 className="text-red-500 hover:text-red-700 text-md hover:font-bold"
-                onClick={() => removeFriend(friend.ID)}
+                onClick={() => removeFriend(friend.id)}
               >
                 unfriend
               </button>
