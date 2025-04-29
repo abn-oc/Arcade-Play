@@ -148,3 +148,10 @@ select * from GlobalChat
 select * from users;
 select * from GlobalChat;
 delete GlobalChat;
+
+delete from FriendRequests;
+select * from FriendRequests;
+insert into FriendRequests (SenderID, ReceiverID)
+values (1, 2);
+
+select * from Friends;

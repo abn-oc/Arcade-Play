@@ -7,50 +7,86 @@ import {
   removeFriend as RemoveFriend,
 } from "../services/friendService";
 import { useNavigate } from "react-router-dom";
-import { Friend, User } from "../types/types";
+import { Friend, FriendRequest, User } from "../types/types";
 import { Socket } from "socket.io-client";
+import {
+  addFriendRequest,
+  getFriendRequests,
+  removeFriendRequest,
+} from "../services/requestService";
 
 // the selFriend function is used to set the friend whose dms are to be opened in FriendChat
 // its passed as prop from the parent of both to share this state between both
 export default function FriendList({ selFriend }: { selFriend: any }) {
   const navigate = useNavigate();
-  const user : User | null | undefined = useContext(userContext)?.user;
-  const socket : Socket | undefined = useContext(userContext)?.socket;
+  const user: User | null | undefined = useContext(userContext)?.user;
+  const socket: Socket | undefined = useContext(userContext)?.socket;
 
   const [sendRequestText, setSendRequestText] = useState<string>("");
-  const [friendList, setFriendList] = useState<
-    Friend[]
-  >([]);
-  const [requests, setRequests] = useState<Friend[]>(
-    []
-  );
+  const [friendList, setFriendList] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
 
-  function sendRequest(e: any) {
+  async function refreshFriends() {
+    if (user) {
+      const friends = await getFriends(user.ID);
+      setFriendList(friends);
+      const reqs = await getFriendRequests(user.ID);
+      setRequests(reqs);
+    }
+  }
+
+  async function sendRequest(e: any) {
     e.preventDefault();
-    // upload request to db
-    // emit signal for other guy to reFetch
+    const sendReqText: string = sendRequestText;
+    setSendRequestText("");
+    if (user && socket && sendReqText.trim()) {
+      if (user.Username === sendReqText) {
+        console.log("ERROR: Can't send Friend Request to yourself.");
+        return;
+      }
+      // upload request to db
+      await addFriendRequest(user?.ID, sendReqText);
+      // emit signal for other guy to reFetch
+      socket.emit("refresh-friends-username", sendReqText);
+    }
     // end
   }
 
-  function deleteRequest(id: number) {
-    // delete request from db
-    // reFetch
+  async function deleteRequest(id: number) {
+    if (user && socket) {
+      // delete request from db
+      await removeFriendRequest(id, user.ID);
+      // reFetch
+      socket.emit("refresh-friends-id", id);
+    }
+    refreshFriends();
     // end
   }
 
   async function acceptRequest(id: number) {
-    // delete req from db
-    deleteRequest(id);
-    // upload friendship to db
-    // reFetch own list
-    // emit signal to reFetch
+    if (user && socket) {
+      // delete req from db
+      await deleteRequest(id);
+      // upload friendship to db
+      await addFriend(user.ID, id);
+      // reFetch own list
+      // emit signal to reFetch
+      socket.emit("refresh-friends-id", id);
+    }
+    refreshFriends();
     // end
   }
 
-  function removeFriend(id: number) {
-    // delete friend from db
-    // emit signal to refetch for other
-    // refetch ur own
+  async function removeFriend(id: number) {
+    if (user && socket) {
+      // delete friend from db
+      await RemoveFriend(user.ID, id);
+      // refetch ur own
+      // emit signal to refetch for other
+      socket.emit("refresh-friends-id", id);
+    }
+    refreshFriends();
+    selFriend(null);
     // end
   }
 
@@ -62,17 +98,18 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
   // load friends and their avatars on startup/reloads (user in dependancy because reload resets user state
   // while re-getting user state via local token)
   useEffect(() => {
-    (async () => {
-      if (user) {
-        const friends = await getFriends(user.ID);
-        setFriendList(friends);
-      }
-    })();
+    refreshFriends();
   }, [user]);
 
   // Socket handlers
   useEffect(() => {
+    if (socket) {
+      socket.on("refresh-friends", refreshFriends);
 
+      return () => {
+        socket.off("refresh-friends", refreshFriends);
+      };
+    }
   }, [socket]);
 
   return (
@@ -99,17 +136,17 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
             className="mb-2 last:mb-0 text-sm flex justify-between items-center"
           >
             <span className="text-blue-700 font-medium">
-              {request.username}
+              {request.Username}
             </span>
             <div className="space-x-1">
               <button
-                onClick={() => acceptRequest(request.id)}
+                onClick={() => acceptRequest(request.SenderID)}
                 className="text-green-600 hover:underline"
               >
                 Accept
               </button>
               <button
-                onClick={() => deleteRequest(request.id)}
+                onClick={() => deleteRequest(request.SenderID)}
                 className="text-red-600 hover:underline"
               >
                 Delete

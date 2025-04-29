@@ -118,12 +118,31 @@ io.on("connection", (socket) => {
     if (targetsocketID) io.to(targetsocketID).emit("removed-friend", fromID);
   });
 
+  socket.on("refresh-friends-username", (toUsername) => {
+    const targetSocketID = onlineUsers.find(
+      (user) => user.userName === toUsername
+    )?.socketID;
+
+    if (targetSocketID) {
+      io.to(targetSocketID).emit("refresh-friends");
+    }
+  });
+
+  socket.on("refresh-friends-id", (toID) => {
+    const targetSocketID = onlineUsers.find(
+      (user) => user.ID === toID
+    )?.socketID;
+
+    if (targetSocketID) {
+      io.to(targetSocketID).emit("refresh-friends");
+    }
+  });
+
   socket.on("send-pm", (from, to) => {
     const targetsocketID = onlineUsers.find(
       (user) => user.ID === to.id
     )?.socketID;
-    if (targetsocketID)
-      io.to(targetsocketID).emit("receive-pm", from);
+    if (targetsocketID) io.to(targetsocketID).emit("receive-pm", from);
   });
 
   socket.on("create-room-tictactoe", (userID) => {

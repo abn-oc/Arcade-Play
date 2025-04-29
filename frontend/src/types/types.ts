@@ -50,3 +50,9 @@ export type LeadboardEntry = {
     Username: string;
     Score: number;
 }
+
+export type FriendRequest = {
+    SenderID: number;
+    Username: string;
+    Avatar: number;
+}
