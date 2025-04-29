@@ -1,6 +1,9 @@
 
+create database projectDB
 use projectDB;
 go
+drop table GlobalChat
+drop table FriendRequests
 DROP TABLE IF EXISTS PrivateMessages;
 DROP TABLE IF EXISTS Friends;
 DROP TABLE IF EXISTS LeaderBoard;
@@ -73,36 +76,76 @@ CREATE TABLE PrivateMessages (
        FOREIGN KEY (SenderID) REFERENCES Users(ID),
     CONSTRAINT FK_PrivateDM_Receiver 
        FOREIGN KEY (ReceiverID) REFERENCES Users(ID)
-);
-sELECT ID, Username, isDeleted FROM Users;
-insert into PrivateMessages (SenderID, Content)
-values (17, 'ho');
-select * from PrivateMessages;
-delete PrivateMessages;
-select * from Users;
-delete from Users;
-select * from Games;
+)
+--// New tables
 
-UPDATE Users
-        SET GamesPlayed = ISNULL(GamesPlayed, 0) + 1
-        WHERE ID = 28 AND IsDeleted = 0
+create table FriendRequests
+(
+SenderID int not null,
+ReceiverID int not null,
+CONSTRAINT FK_FriendRequests1 FOREIGN KEY (ReceiverID) REFERENCES Users(ID),
+CONSTRAINT PK_FriendRequests PRIMARY KEY (SenderID, ReceiverID),
+CONSTRAINT FK_FriendRequests2 FOREIGN KEY (SenderID) REFERENCES Users(ID)
+)
+create table GlobalChat
+(
+SenderID int not null,
+Text nvarchar(255),
+MessageTime DATETIME DEFAULT GETDATE(),
+CONSTRAINT FK_GlobelChat FOREIGN KEY (SenderID) REFERENCES Users(ID)
+)
 
-delete Users;
+--//New quries return msg with avatar and username
+select U.ID,U.FirstName,U.Avatar,Text
+from GlobalChat G left join Users U on G.SenderID=U.ID
 
-select * from LeaderBoard;
-insert into LeaderBoard
-values (17, 1, 25), (18, 1, 40);
-select * from Games;
-select * from Users;
-update Users
-set Username = 'changed'
-where FirstName = 'abd';
 
-select * from Friends;
-delete Friends;
+--//New trigger delete all previous msg if count(*) of GlobleChat>15
+GO
+CREATE TRIGGER TRG_LimitGlobalChatMessages
+ON GlobalChat
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-SELECT u.Username, l.Score
-        FROM LeaderBoard l
-        JOIN Users u ON l.UserID = u.ID
-        WHERE l.GameID = 1
-        ORDER BY l.Score DESC;
+    -- Delete the oldest message(s) if there are more than 15
+    WHILE (SELECT COUNT(*) FROM GlobalChat) > 15
+    BEGIN
+        ;WITH CTE AS (
+            SELECT TOP (1) *
+            FROM GlobalChat
+            ORDER BY MessageTime ASC
+        )
+        DELETE FROM CTE;
+    END
+END;
+
+-- Insert User 1 into Users table
+INSERT INTO Users 
+(FirstName, LastName, Email, Passwords, Username, Avatar, GamesPlayed, IsDeleted, AuthProvider, ProviderUserID, Bio)
+VALUES 
+('John', 'Doe', 'johndoe@example.com', 'Password123', 'JohnDoe', 1, 5, 0, NULL, NULL, 'Excited to play!');
+
+
+-- Insert 16 sample messages into GlobalChat
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 1');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 2');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 3');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 4');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 5');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 6');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 7');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 8');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 9');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 10');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 11');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 12');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 13');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 14');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 15');
+INSERT INTO GlobalChat (SenderID, Text) VALUES (1, 'Hello World 16');
+select * from GlobalChat
+
+
+
