@@ -3,9 +3,15 @@ import { getUserScore } from "../services/leaderboardService";
 import { getAvatarID } from "../services/friendService";
 
 // the members array passed to this component already have id and username
-export default function MembersList({ members }: { members: {
-  avatar: number; id: number; username: string 
-}[] }) {
+export default function MembersList({
+  members,
+}: {
+  members: {
+    avatar: number;
+    id: number;
+    username: string;
+  }[];
+}) {
   const [scoreList, setScoreList] = useState<{ Score: number }[]>([]);
   const [avatars, setAvatars] = useState<number[]>([]);
 

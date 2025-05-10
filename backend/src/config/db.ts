@@ -1,5 +1,5 @@
-import * as sql from 'mssql';
-import 'dotenv/config';
+import * as sql from "mssql";
+import "dotenv/config";
 
 type SqlConfig = {
   server: string;
@@ -19,10 +19,10 @@ type SqlConfig = {
 };
 
 const sqlConfig: SqlConfig = {
-  server: process.env.DB_SERVER || '',
-  database: process.env.DB_NAME || '',
-  user: process.env.DB_USER || '',
-  password: process.env.DB_PASS || '',
+  server: process.env.DB_SERVER || "",
+  database: process.env.DB_NAME || "",
+  user: process.env.DB_USER || "",
+  password: process.env.DB_PASS || "",
   port: 56290,
   pool: {
     max: 10,
@@ -41,9 +41,9 @@ export async function connectDB(): Promise<sql.ConnectionPool> {
   if (!pool) {
     try {
       pool = await new sql.ConnectionPool(sqlConfig).connect();
-      console.log('Connected to Database');
+      console.log("Connected to Database");
     } catch (err) {
-      console.error('Error connecting to database:', err);
+      console.error("Error connecting to database:", err);
       throw err;
     }
   }
@@ -54,6 +54,6 @@ export async function disconnectDB() {
   if (pool) {
     await pool.close();
     pool = null;
-    console.log('Database connection closed');
+    console.log("Database connection closed");
   }
 }

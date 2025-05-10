@@ -95,7 +95,7 @@ friendRoutes.post(
         .map((user) => ({
           id: user.ID,
           username: user.Username,
-          avatar: user.Avatar
+          avatar: user.Avatar,
         }));
 
       res.status(200).json(friends);

@@ -65,7 +65,7 @@ leaderboardRoutes.post("/", async (req: Request, res: Response) => {
   const { userId, gameId, score } = req.body;
 
   try {
-    // 
+    //
     const pool = await connectDB();
     await pool
       .request()

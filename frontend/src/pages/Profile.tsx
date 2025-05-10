@@ -35,7 +35,7 @@ export default function Profile() {
       setMessage((err as Error).message);
     }
   };
-  
+
   //putting this user from context as dependancy in useEffect fixes the reloading issue
   const user = useContext(userContext)?.user;
 
@@ -43,7 +43,6 @@ export default function Profile() {
   useEffect(() => {
     loadProfile();
   }, [user]);
-
 
   const handleUsernameChange = async () => {
     try {

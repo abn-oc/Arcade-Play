@@ -364,8 +364,7 @@ authRoutes.post(
       const pool = await connectDB();
 
       // getting current games played
-      const result = await pool.request()
-        .input("ID", sql.Int, req.user.id)
+      const result = await pool.request().input("ID", sql.Int, req.user.id)
         .query(`
           SELECT GamesPlayed FROM Users
           WHERE ID = @ID AND IsDeleted = 0
@@ -378,10 +377,10 @@ authRoutes.post(
       const currentGamesPlayed = result.recordset[0].GamesPlayed;
 
       // update it with + 1
-      await pool.request()
+      await pool
+        .request()
         .input("ID", sql.Int, req.user.id)
-        .input("NewCount", sql.Int, currentGamesPlayed + 1)
-        .query(`
+        .input("NewCount", sql.Int, currentGamesPlayed + 1).query(`
           UPDATE Users
           SET GamesPlayed = @NewCount
           WHERE ID = @ID AND IsDeleted = 0
@@ -394,7 +393,6 @@ authRoutes.post(
     }
   }
 );
-
 
 // edit bio route
 authRoutes.patch(

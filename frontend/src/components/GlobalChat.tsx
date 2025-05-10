@@ -45,7 +45,7 @@ export default function GlobalChat() {
       console.log(msgs);
       setGlobalMsgs(msgs);
     }
-    updateMsgs()
+    updateMsgs();
   }, []);
 
   // it scrolls down the chat whenever globalMsgs state changes
@@ -71,7 +71,10 @@ export default function GlobalChat() {
       >
         {globalMsgs.map((msg, index) => (
           <div key={index} className="mb-2 last:mb-0">
-            <img src={`assets/avatars/${msg.Avatar}.jpg`} className="w-8 rounded-full inline mr-2" />
+            <img
+              src={`assets/avatars/${msg.Avatar}.jpg`}
+              className="w-8 rounded-full inline mr-2"
+            />
             <span className="font-semibold text-blue-700">{msg.Username}:</span>
             <span className="ml-1 text-gray-800">{msg.Content}</span>
           </div>

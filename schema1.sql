@@ -83,7 +83,7 @@ CREATE TABLE PrivateMessages (
     SenderID INT NULL,      -- Allow NULL
     ReceiverID INT NULL,    -- Allow NULL
     Content NVARCHAR(MAX) NOT NULL,
-    SentTime DATETIME NOT NULL DEFAULT GETDATE(),
+    SentTime DATETIME NOT NULL DEFAULT GETDATE(),-
     CONSTRAINT FK_PrivateDM_Sender 
        FOREIGN KEY (SenderID) REFERENCES Users(ID),
     CONSTRAINT FK_PrivateDM_Receiver 
@@ -155,3 +155,5 @@ insert into FriendRequests (SenderID, ReceiverID)
 values (1, 2);
 
 select * from Friends;
+
+select * from Users;
