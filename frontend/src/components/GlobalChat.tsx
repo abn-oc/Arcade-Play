@@ -7,14 +7,9 @@ import { resolveAvatarSrc } from "../utils/avatar";
 export default function GlobalChat() {
   const user = useContext(userContext)?.user;
   const socket = useContext(userContext)?.socket;
-
   const [globalMsgs, setGlobalMsgs] = useState<GlobalMessage[]>([]);
   const [globalMsgText, setGlobalMsgText] = useState("");
-
-  // to scroll the chat we need a reference to an html div
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  // emits signal after uploading to db
   const sendGlobalMsg = async (e: any) => {
     e.preventDefault();
     if (user && socket && globalMsgText.trim()) {
@@ -23,8 +18,6 @@ export default function GlobalChat() {
       setGlobalMsgText("");
     }
   };
-
-  // receiving signal and fetching globalMsgs
   useEffect(() => {
     async function updateMsgs() {
       const msgs: GlobalMessage[] = await getMessages();
@@ -38,8 +31,6 @@ export default function GlobalChat() {
       if (socket) socket.off("globalMessage", updateMsgs);
     };
   }, [socket]);
-
-  // fetch on mounting of component
   useEffect(() => {
     async function updateMsgs() {
       const msgs: GlobalMessage[] = await getMessages();
@@ -48,8 +39,6 @@ export default function GlobalChat() {
     }
     updateMsgs();
   }, []);
-
-  // it scrolls down the chat whenever globalMsgs state changes
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -58,40 +47,37 @@ export default function GlobalChat() {
   }, [globalMsgs]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="bg-blue-900 text-white p-3 font-medium flex items-center">
-        <span className="text-lg">Global Chat</span>
+    <section className="w-full overflow-hidden rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_0_#000] lg:w-72">
+      <div className="flex items-center bg-[#0b82ff] p-3 font-black text-white">
+        <span className="text-lg tracking-tight">Global Chat</span>
         <span className="ml-2 text-xl">🌍</span>
       </div>
 
-      {/* Messages container */}
-      <div
-        className="p-3 max-h-39 overflow-y-auto bg-gray-50"
-        ref={messagesContainerRef}
-      >
+      <div className="max-h-56 overflow-y-auto bg-[#f7f9fc] p-3" ref={messagesContainerRef}>
         {globalMsgs.map((msg, index) => (
-          <div key={index} className="mb-2 last:mb-0">
+          <article
+            key={index}
+            className="mb-2 rounded-xl border border-slate-200 bg-white px-2 py-1.5 last:mb-0"
+          >
             <img
               src={resolveAvatarSrc(msg.Avatar)}
-              className="w-8 rounded-full inline mr-2"
+              className="mr-2 inline h-8 w-8 rounded-full border border-black object-cover"
             />
-            <span className="font-semibold text-blue-700">{msg.Username}:</span>
-            <span className="ml-1 text-gray-800">{msg.Content}</span>
-          </div>
+            <span className="font-black text-[#0b82ff]">{msg.Username}:</span>
+            <span className="ml-1 text-sm font-medium text-slate-800">{msg.Content}</span>
+          </article>
         ))}
       </div>
 
-      {/* Input form */}
-      <form onSubmit={sendGlobalMsg} className="border-t border-gray-200 p-2">
+      <form onSubmit={sendGlobalMsg} className="border-t-2 border-black p-2">
         <input
           type="text"
           value={globalMsgText}
           onChange={(e) => setGlobalMsgText(e.target.value)}
           placeholder="Type a message in global chat..."
-          className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          className="w-full rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0b82ff]"
         />
       </form>
-    </div>
+    </section>
   );
 }

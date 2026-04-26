@@ -36,7 +36,7 @@ export default function MembersList({
   }, [members]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
+    <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:w-72">
       {/* Header */}
       <div className="bg-blue-900 text-white p-3 font-medium flex items-center">
         <span className="text-lg">Room Members</span>
@@ -44,7 +44,7 @@ export default function MembersList({
       </div>
 
       {/* Members container */}
-      <div className="p-3 max-h-39 overflow-y-auto bg-gray-50">
+      <div className="max-h-56 overflow-y-auto bg-gray-50 p-3">
         {members.map((member, index) => (
           <div key={member.id} className="mb-2 last:mb-0">
             <span className="font-semibold text-blue-700 flex flex-row gap-2 items-center">

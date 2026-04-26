@@ -9,15 +9,12 @@ import { Friend, Game } from "../types/types";
 
 export default function Home() {
   const user = useContext(userContext)?.user;
-
   const socket = useContext(userContext)?.socket;
-
-  // which friend private msgs are shown
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
-
   const [games, setGames] = useState<Game[]>([]);
-  // which game's details are shown
   const [selectedGame, setSelectedGame] = useState<number | null>(null);
+  const game_card_class =
+    "group cursor-pointer rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000] transition-all duration-200 hover:translate-y-[-2px] hover:shadow-[8px_8px_0_0_#0b82ff] active:translate-y-[1px] active:shadow-[3px_3px_0_0_#000]";
 
   function selFriend(friend: Friend) {
     setSelectedFriend(friend);
@@ -25,17 +22,11 @@ export default function Home() {
 
   useEffect(() => {
     if (user && socket) {
-      // basically give id username to server socket so it can store in its onlineUsers array
       socket.emit("register-user", user.ID, user.Username);
-      // if that person was in a room, reconnect it
-      // ( this probably does'nt work as intended )
-      // ( sockets logic regarding games wasnt our focus so its all over the place )
       socket.emit("reconnect-room", user.ID);
     }
   }, [user, socket]);
 
-  // realtime receiving and opening dm of friend
-  // ( if dms were already open, this will cause reFetching of msgs in FriendChat )
   useEffect(() => {
     function openDms(friend: Friend) {
       setSelectedFriend(friend);
@@ -48,7 +39,6 @@ export default function Home() {
     };
   }, [socket]);
 
-  // show games on homescreen when its opened
   useEffect(() => {
     (async () => {
       const games: Game[] = await getAllGames();
@@ -57,43 +47,52 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="p-4 flex flex-row gap-4">
-      {/* Column 1 */}
-      <div className="flex flex-col gap-4">
-        {/* <button className="m-1 p-1 border" onClick={() => console.log(user)}>
-          log home
-        </button> */}
-        <GlobalChat />
-        <FriendList selFriend={selFriend} />
-        <FriendChat
-          friend={selectedFriend}
-          close={() => setSelectedFriend(null)}
-        />
-      </div>
+    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
+      <section className="mb-5 rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+        <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          Play Hub
+        </h1>
+        <p className="mt-1 text-sm font-medium text-slate-600">
+          Pick a game, join a room, and jump into live chat.
+        </p>
+      </section>
 
-      {/* Column 2 */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-row gap-4 flex-wrap justify-center">
-          {games.map((game) => (
-            <div
-              key={game.GameID}
-              className="bg-gray-100 rounded-lg p-4 w-40 text-center cursor-pointer hover:bg-gray-200 transition-colors"
-              onClick={() => setSelectedGame(game.GameID)}
-            >
-              <img
-                src={`/assets/${game.Icon}.png`}
-                alt={game.GameName}
-                className="w-32 h-32 object-cover mx-auto"
-              />
-              <p className="mt-2 text-sm font-medium text-gray-700">
-                {game.GameName}
-              </p>
+      <section className="flex flex-col gap-4 lg:flex-row">
+        <aside className="flex w-full flex-col gap-4 lg:w-72">
+          <GlobalChat />
+          <FriendList selFriend={selFriend} />
+          <FriendChat
+            friend={selectedFriend}
+            close={() => setSelectedFriend(null)}
+          />
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <section className="mb-5 rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+            <h2 className="text-xl font-black text-slate-900">Game Library</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {games.map((game) => (
+                <article
+                  key={game.GameID}
+                  className={game_card_class}
+                  onClick={() => setSelectedGame(game.GameID)}
+                >
+                  <img
+                    src={`/assets/${game.Icon}.png`}
+                    alt={game.GameName}
+                    className="mx-auto h-28 w-28 object-contain transition-transform duration-200 group-hover:scale-105"
+                  />
+                  <p className="mt-2 text-center text-base font-black text-slate-900">
+                    {game.GameName}
+                  </p>
+                </article>
+              ))}
             </div>
-          ))}
-        </div>
+          </section>
 
-        {selectedGame && <GameDetails id={selectedGame} />}
-      </div>
-    </div>
+          {selectedGame && <GameDetails id={selectedGame} />}
+        </div>
+      </section>
+    </main>
   );
 }

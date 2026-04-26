@@ -12,7 +12,6 @@ export default function GameDetails({ id }: { id: number }) {
   const [leaderBoard, setLeaderBoard] = useState<LeadboardEntry[]>([]);
   const navigate = useNavigate();
 
-  // fetch details and leaderboard on component mounting (which is mounted when a gameID is selected)
   useEffect(() => {
     const fetchGame = async () => {
       try {
@@ -43,26 +42,27 @@ export default function GameDetails({ id }: { id: number }) {
   };
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <p className="p-4 text-sm font-medium text-slate-600">Loading game...</p>;
   }
 
   return (
-    <div className="max-w-2lg mx-auto p-2 border rounded shadow-lg flex flex-row">
-      <div className="flex flex-col">
+    <section className="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="flex flex-col rounded-xl border border-slate-200 bg-slate-50 p-4">
         {game ? (
           <>
-            <h2 className="text-xl font-bold">{game.GameName}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">{game.GameName}</h2>
             <img
               src={`/assets/${game.Icon}.png`}
               alt={game.GameName}
               className="w-full h-48 object-contain"
             />
-            <p className="text-sm text-gray-700">{game.GameDesc}</p>
+            <p className="text-sm font-medium text-slate-700">{game.GameDesc}</p>
 
             {/* Create Room Button */}
             <button
               onClick={handleCreateRoom}
-              className="mt-4 w-full bg-blue-500 text-white p-2 rounded"
+              className="mt-4 w-full rounded-full border-2 border-black bg-[#0b82ff] p-2 text-sm font-black text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-y-[-1px] hover:bg-[#0069d9] hover:shadow-[4px_4px_0_0_#000] active:translate-y-[1px] active:shadow-[2px_2px_0_0_#000]"
             >
               Create Room
             </button>
@@ -74,11 +74,11 @@ export default function GameDetails({ id }: { id: number }) {
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value)}
                 placeholder="Join room via code"
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0b82ff]"
               />
               <button
                 onClick={handleJoinRoom}
-                className="mt-2 w-full bg-green-500 text-white p-2 rounded"
+                className="mt-2 w-full rounded-full border-2 border-black bg-[#ff8a00] p-2 text-sm font-black text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-y-[-1px] hover:bg-[#e27400] hover:shadow-[4px_4px_0_0_#000] active:translate-y-[1px] active:shadow-[2px_2px_0_0_#000]"
               >
                 Join Room
               </button>
@@ -90,24 +90,27 @@ export default function GameDetails({ id }: { id: number }) {
       </div>
 
       {/* LeaderBoard */}
-      <div className="mt-4">
-        <h3 className="text-lg font-semibold">Leaderboard</h3>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <h3 className="text-lg font-black text-slate-900">Leaderboard</h3>
         <ul className="mt-2 space-y-2">
           {leaderBoard.map((entry, index) => (
             <li
               key={index}
-              className="flex justify-between p-2 gap-8 border-b border-gray-300 rounded"
+              className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-2 transition-all duration-150 hover:translate-y-[-1px] hover:shadow-[0_3px_0_0_#0b82ff]"
             >
               <img
                 src={resolveAvatarSrc(entry.Avatar)}
-                className="w-12"
+                className="h-10 w-10 rounded-full object-cover"
               />
-              <span className="font-medium">{entry.Username}</span>
-              <span className="text-gray-600">{entry.Score}</span>
+              <span className="font-black text-slate-900">{entry.Username}</span>
+              <span className="rounded-full bg-[#ffe100] px-3 py-1 text-xs font-black text-slate-900">
+                {entry.Score}
+              </span>
             </li>
           ))}
         </ul>
       </div>
-    </div>
+      </div>
+    </section>
   );
 }

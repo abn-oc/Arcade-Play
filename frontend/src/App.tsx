@@ -21,13 +21,6 @@ export default function App() {
     if (setUser) setUser(null);
     navigate("/");
   }
-
-  // this useEffect does following things
-  // executes whenever website is opened, or reloaded
-  // if theres a valid token, sign in automatically
-  // if you were on '/' which means you just opened, go to /home
-  // if you were on some other route like '/profile' and reloaded, dont change the path
-  // if theres no valid token, just clear any userProfile and go to '/' (the login page)
   useEffect(() => {
     async function fetchUser() {
       try {
@@ -49,76 +42,67 @@ export default function App() {
   }, []);
 
   return (
-    <div>
-      {/* Top Navigation Bar */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md">
-        <div className="container mx-auto px-4 py-2 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f7f9fc] text-slate-900">
+      <header className="sticky top-0 z-30 border-b-2 border-black bg-white/95 backdrop-blur-sm">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-5">
           {user ? (
             <>
-              {/* User Info Section */}
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <img
                   src={resolveAvatarSrc(user.Avatar)}
                   alt="User avatar"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                  className="h-11 w-11 rounded-full border-2 border-black object-cover shadow-[3px_3px_0_0_#000]"
                 />
-                <div className="md:block">
-                  <p className="font-medium">{user.Username}</p>
-                  <p className="text-xs text-blue-100">{user.Email}</p>
+                <div className="hidden min-w-0 sm:block">
+                  <p className="truncate text-base font-black tracking-tight">
+                    {user.Username}
+                  </p>
+                  <p className="truncate text-xs font-medium text-slate-600">
+                    {user.Email}
+                  </p>
                 </div>
               </div>
 
-              {/* Navigation Buttons */}
               <div className="flex items-center gap-2">
                 <button
-                  className="px-3 py-1 rounded hover:bg-blue-600 transition-colors flex items-center gap-1 text-sm font-medium"
+                  className="rounded-full border-2 border-black bg-[#0b82ff] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-y-[-1px] hover:bg-[#0069d9] hover:shadow-[4px_4px_0_0_#000] active:translate-y-[1px] active:shadow-[2px_2px_0_0_#000]"
                   onClick={() => navigate("/home")}
                 >
-                  <span className="hidden sm:inline">Home</span>
-                  <span className="sm:hidden">🏠</span>
+                  Home
                 </button>
                 <button
-                  className="px-3 py-1 rounded hover:bg-blue-600 transition-colors flex items-center gap-1 text-sm font-medium"
+                  className="rounded-full border-2 border-black bg-[#ff3b30] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-y-[-1px] hover:bg-[#e0261c] hover:shadow-[4px_4px_0_0_#000] active:translate-y-[1px] active:shadow-[2px_2px_0_0_#000]"
                   onClick={() => navigate("/profile")}
                 >
-                  <span className="hidden sm:inline">Profile</span>
-                  <span className="sm:hidden">👤</span>
+                  Profile
                 </button>
                 <button
-                  className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 transition-colors text-sm font-medium"
+                  className="rounded-full border-2 border-black bg-[#111827] px-4 py-2 text-sm font-black text-white shadow-[3px_3px_0_0_#000] transition-all duration-150 hover:translate-y-[-1px] hover:bg-black hover:shadow-[4px_4px_0_0_#000] active:translate-y-[1px] active:shadow-[2px_2px_0_0_#000]"
                   onClick={handleSignOut}
                 >
                   Sign Out
                 </button>
-
-                {/* Debug Button - Consider hiding in production */}
-                {/* <button
-                  className="px-2 py-1 text-xs bg-gray-700 rounded hover:bg-gray-600 transition-colors ml-2"
-                  onClick={() => console.log(user)}
-                >
-                  Debug
-                </button> */}
               </div>
             </>
           ) : (
-            <>
-              {/* Not Signed In State */}
-              <div className="flex items-center">
-                <span className="font-medium">Not signed in</span>
-              </div>
-            </>
+            <div className="flex items-center">
+              <span className="rounded-full border-2 border-black bg-[#ffe100] px-4 py-2 text-sm font-black shadow-[3px_3px_0_0_#000]">
+                Not signed in
+              </span>
+            </div>
           )}
-        </div>
-      </div>
+        </nav>
+      </header>
 
-      {/* routes */}
-      <Routes>
-        <Route path="/" element={Landing()} />
-        <Route path="/home" element={Home()} />
-        <Route path="/profile" element={Profile()} />
-        <Route path="/profile/:id" element={<ProfileID />} />
-        <Route path="/tictactoe" element={TicTacToe()} />
-      </Routes>
+      <main>
+        <Routes>
+          <Route path="/" element={Landing()} />
+          <Route path="/home" element={Home()} />
+          <Route path="/profile" element={Profile()} />
+          <Route path="/profile/:id" element={<ProfileID />} />
+          <Route path="/tictactoe" element={TicTacToe()} />
+        </Routes>
+      </main>
     </div>
   );
 }

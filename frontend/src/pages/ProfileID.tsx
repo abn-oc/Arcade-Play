@@ -28,63 +28,70 @@ export default function ProfileID() {
     }
   };
 
-  if (!profile) return <div>Loading...</div>;
+  if (!profile) {
+    return <div className="p-6 text-center text-gray-600">Loading profile...</div>;
+  }
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", padding: "20px" }}>
-      <h2>Profile</h2>
-      <p>
-        <strong>Email:</strong> {profile.Email}
-      </p>
-      <p>
-        <strong>Username:</strong> {profile.Username}
-      </p>
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        <h1 className="mb-5 text-2xl font-bold text-gray-900">Player Profile</h1>
 
-      {topThreeGames.length > 0 && (
-        <div style={{ fontSize: "0.9em", color: "#555", marginBottom: "8px" }}>
-          🏆 Top Player in:{" "}
-          {topThreeGames.map((name, idx) => (
-            <span
-              key={idx}
-              style={{
-                display: "inline-block",
-                backgroundColor: "#e0ffe0",
-                padding: "2px 8px",
-                borderRadius: "12px",
-                marginRight: "4px",
-              }}
-            >
-              {name}
-            </span>
-          ))}
+        <div className="mb-5 flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+          <img
+            src={resolveAvatarSrc(profile.Avatar)}
+            alt="avatar"
+            className="h-24 w-24 rounded-full border-4 border-blue-100 object-cover"
+          />
+          <div>
+            <p className="text-lg font-semibold text-gray-900">{profile.Username}</p>
+            <p className="text-sm text-gray-600">{profile.Email}</p>
+          </div>
         </div>
-      )}
 
-      <img
-        src={resolveAvatarSrc(profile.Avatar)}
-        alt="avatar"
-        className="w-24"
-      />
-      <p>
-        <strong>First Name:</strong> {profile.FirstName}
-      </p>
-      <p>
-        <strong>Last Name:</strong> {profile.LastName}
-      </p>
-      <p>
-        <strong>Games Played:</strong> {profile.GamesPlayed}
-      </p>
-      <p>
-        <strong>Auth Provider:</strong> {profile.AuthProvider || "email"}
-      </p>
-      <p>
-        <strong>Bio:</strong> {profile.Bio || "No bio available"}
-      </p>
-      <hr />
+        {topThreeGames.length > 0 && (
+          <div className="mb-5">
+            <p className="mb-2 text-sm font-medium text-gray-700">Top Player In</p>
+            <div className="flex flex-wrap gap-2">
+              {topThreeGames.map((name, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
-      {message && (
-        <div style={{ marginTop: "10px", color: "green" }}>{message}</div>
-      )}
+        <div className="grid grid-cols-1 gap-2 border-t border-gray-200 pt-4 text-sm text-gray-700 sm:grid-cols-2">
+          <p>
+            <span className="font-semibold">First Name:</span> {profile.FirstName}
+          </p>
+          <p>
+            <span className="font-semibold">Last Name:</span> {profile.LastName}
+          </p>
+          <p>
+            <span className="font-semibold">Games Played:</span>{" "}
+            {profile.GamesPlayed}
+          </p>
+          <p>
+            <span className="font-semibold">Auth Provider:</span>{" "}
+            {profile.AuthProvider || "email"}
+          </p>
+          <p className="sm:col-span-2">
+            <span className="font-semibold">Bio:</span>{" "}
+            {profile.Bio || "No bio available"}
+          </p>
+        </div>
+
+        {message && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {message}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

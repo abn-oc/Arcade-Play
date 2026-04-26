@@ -16,8 +16,6 @@ import {
 } from "../services/requestService";
 import { resolveAvatarSrc } from "../utils/avatar";
 
-// the selFriend function is used to set the friend whose dms are to be opened in FriendChat
-// its passed as prop from the parent of both to share this state between both
 export default function FriendList({ selFriend }: { selFriend: any }) {
   const navigate = useNavigate();
   const user: User | null | undefined = useContext(userContext)?.user;
@@ -45,50 +43,35 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
         console.log("ERROR: Can't send Friend Request to yourself.");
         return;
       }
-      // upload request to db
       await addFriendRequest(user?.ID, sendReqText);
-      // emit signal for other guy to reFetch
       socket.emit("refresh-friends-username", sendReqText);
     }
-    // end
   }
 
   async function deleteRequest(id: number) {
     if (user && socket) {
-      // delete request from db
       await removeFriendRequest(id, user.ID);
-      // reFetch
       socket.emit("refresh-friends-id", id);
     }
     refreshFriends();
-    // end
   }
 
   async function acceptRequest(id: number) {
     if (user && socket) {
-      // delete req from db
       await deleteRequest(id);
-      // upload friendship to db
       await addFriend(user.ID, id);
-      // reFetch own list
-      // emit signal to reFetch
       socket.emit("refresh-friends-id", id);
     }
     refreshFriends();
-    // end
   }
 
   async function removeFriend(id: number) {
     if (user && socket) {
-      // delete friend from db
       await RemoveFriend(user.ID, id);
-      // refetch ur own
-      // emit signal to refetch for other
       socket.emit("refresh-friends-id", id);
     }
     refreshFriends();
     selFriend(null);
-    // end
   }
 
   async function gotoProfile(id: number) {
@@ -96,13 +79,10 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
     navigate(`/profile/${Id}`);
   }
 
-  // load friends and their avatars on startup/reloads (user in dependancy because reload resets user state
-  // while re-getting user state via local token)
   useEffect(() => {
     refreshFriends();
   }, [user]);
 
-  // Socket handlers
   useEffect(() => {
     if (socket) {
       socket.on("refresh-friends", refreshFriends);
@@ -114,41 +94,41 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
   }, [socket]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md w-64 border border-gray-200 overflow-hidden">
-      <div className="bg-blue-900 text-white p-3 font-medium flex items-center">
-        <span className="text-lg">Friends List</span>
+    <section className="w-full overflow-hidden rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_0_#000] lg:w-72">
+      <div className="flex items-center bg-[#ff3b30] p-3 font-black text-white">
+        <span className="text-lg tracking-tight">Friends List</span>
         <span className="ml-2 text-xl">🫂</span>
       </div>
 
-      <form onSubmit={sendRequest} className="border-b border-gray-200 p-2">
+      <form onSubmit={sendRequest} className="border-b border-slate-200 p-2">
         <input
           type="text"
           value={sendRequestText}
           onChange={(e) => setSendRequestText(e.target.value)}
           placeholder="Add friend by username..."
-          className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          className="w-full rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#ff3b30]"
         />
       </form>
 
-      <div className="p-3 max-h-36 overflow-y-auto bg-gray-50">
+      <div className="max-h-40 overflow-y-auto bg-[#f7f9fc] p-3">
         {requests.map((request, index) => (
           <div
             key={index}
-            className="mb-2 last:mb-0 text-sm flex justify-between items-center"
+            className="mb-2 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-sm last:mb-0"
           >
-            <span className="text-blue-700 font-medium">
+            <span className="font-black text-[#ff3b30]">
               {request.Username}
             </span>
             <div className="space-x-1">
               <button
                 onClick={() => acceptRequest(request.SenderID)}
-                className="text-green-600 hover:underline"
+                className="rounded-full bg-[#0b82ff] px-2 py-1 text-xs font-black text-white transition-colors hover:bg-[#0069d9]"
               >
                 Accept
               </button>
               <button
                 onClick={() => deleteRequest(request.SenderID)}
-                className="text-red-600 hover:underline"
+                className="rounded-full bg-[#111827] px-2 py-1 text-xs font-black text-white transition-colors hover:bg-black"
               >
                 Delete
               </button>
@@ -157,30 +137,30 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
         ))}
       </div>
 
-      <div className="p-3 border-t border-gray-200 bg-white max-h-36 overflow-y-auto">
+      <div className="max-h-48 overflow-y-auto border-t border-slate-200 bg-white p-3">
         {friendList.map((friend, index) => (
           <div
             key={index}
             onClick={() => selFriend(friend)}
-            className="text-sm text-gray-800 py-1 px-2 rounded hover:bg-gray-100 cursor-pointer flex items-center justify-between"
+            className="mb-2 flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-2 py-1.5 text-sm text-slate-800 transition-all duration-150 hover:translate-y-[-1px] hover:bg-[#fff7e6] hover:shadow-[0_3px_0_0_#ff8a00] last:mb-0"
           >
             <div className="flex items-center gap-2">
               <img
                 src={resolveAvatarSrc(friend.avatar)}
                 alt="avatar"
-                className="w-6 h-6 rounded-full object-cover"
+                className="h-6 w-6 rounded-full border border-black object-cover"
               />
-              {friend.username}
+              <span className="font-semibold">{friend.username}</span>
             </div>
             <div className="flex gap-1">
               <button
-                className="text-green-500 hover:text-green-700 text-md hover:font-bold"
+                className="rounded-full border border-black bg-[#ffe100] px-2 py-0.5 text-xs font-black text-slate-900"
                 onClick={() => gotoProfile(friend.id)}
               >
                 profile
               </button>
               <button
-                className="text-red-500 hover:text-red-700 text-md hover:font-bold"
+                className="rounded-full border border-black bg-[#ffd2d0] px-2 py-0.5 text-xs font-black text-[#8f1f18]"
                 onClick={() => removeFriend(friend.id)}
               >
                 unfriend
@@ -189,6 +169,6 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

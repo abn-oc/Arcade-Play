@@ -97,14 +97,21 @@ export default function Landing() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
-      <h1 className="text-3xl font-bold mb-6">Welcome</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50 px-4 py-8">
+      <h1 className="mb-2 text-3xl font-bold text-gray-900 sm:text-4xl">Arcade Play</h1>
+      <p className="mb-6 text-sm text-gray-600 sm:text-base">
+        Sign in to play games, chat, and track your leaderboard rank.
+      </p>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
+          {error}
+        </p>
+      )}
 
-      <div className="flex flex-col md:flex-row gap-6 w-full max-w-4xl">
+      <div className="flex w-full max-w-5xl flex-col gap-6 md:flex-row">
         {/* Sign In */}
-        <div className="flex-1 max-w-md bg-white p-6 rounded-lg shadow-md">
+        <div className="flex-1 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4 text-center">Sign In</h2>
           <form onSubmit={handleEmailLogin} className="flex flex-col gap-3">
             <input
@@ -125,7 +132,7 @@ export default function Landing() {
             />
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded p-2"
+              className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700"
             >
               Sign In
             </button>
@@ -140,7 +147,7 @@ export default function Landing() {
         </div>
 
         {/* Sign Up */}
-        <div className="flex-1 max-w-md bg-white p-6 rounded-lg shadow-md">
+        <div className="flex-1 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4 text-center">Sign Up</h2>
           <form onSubmit={handleEmailSignup} className="flex flex-col gap-3">
             <input
@@ -185,7 +192,7 @@ export default function Landing() {
             />
             <button
               type="submit"
-              className="bg-green-500 hover:bg-green-600 text-white rounded p-2"
+              className="rounded-lg bg-green-600 p-2 text-white transition-colors hover:bg-green-700"
             >
               Sign Up
             </button>
