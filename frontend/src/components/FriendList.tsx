@@ -14,6 +14,7 @@ import {
   getFriendRequests,
   removeFriendRequest,
 } from "../services/requestService";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 // the selFriend function is used to set the friend whose dms are to be opened in FriendChat
 // its passed as prop from the parent of both to share this state between both
@@ -165,7 +166,7 @@ export default function FriendList({ selFriend }: { selFriend: any }) {
           >
             <div className="flex items-center gap-2">
               <img
-                src={`/assets/avatars/${friend.avatar}.jpg`}
+                src={resolveAvatarSrc(friend.avatar)}
                 alt="avatar"
                 className="w-6 h-6 rounded-full object-cover"
               />

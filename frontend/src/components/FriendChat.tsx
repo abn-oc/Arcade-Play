@@ -5,6 +5,7 @@ import {
   sendPrivateMessage,
 } from "../services/friendService";
 import { Friend, PrivateMessage } from "../types/types";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 export default function FriendChat({
   friend,
@@ -31,12 +32,12 @@ export default function FriendChat({
       const to: Friend = {
         id: friend.id,
         username: friend.username,
-        avatar: Number(friend.avatar),
+        avatar: friend.avatar,
       };
       const from: Friend = {
         id: user.ID,
         username: user.Username,
-        avatar: Number(user.Avatar),
+        avatar: user.Avatar,
       };
       socket?.emit("send-pm", from, to);
     }
@@ -91,7 +92,7 @@ export default function FriendChat({
           <div className="bg-blue-900 text-white p-3 font-medium flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
-                src={`assets/avatars/${friend.avatar}.jpg`}
+                src={resolveAvatarSrc(friend.avatar)}
                 className="w-10 h-10 rounded-full object-cover"
                 alt={`${friend.username}'s avatar`}
               />

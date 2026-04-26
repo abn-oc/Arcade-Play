@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
-import sql from "mssql";
-import { connectDB } from "../config/db";
+import { dbQuery } from "../config/db";
 const requestRoutes = express.Router();
 
 requestRoutes.post(
@@ -9,62 +8,58 @@ requestRoutes.post(
     const { senderID, receiverUsername } = req.body;
 
     try {
-      const pool = await connectDB();
-
       // get id of receiver from username
-      const result = await pool
-        .request()
-        .input("receiverUsername", sql.NVarChar, receiverUsername).query(`
-            SELECT ID FROM Users WHERE Username = @receiverUsername
-          `);
+      const result = await dbQuery("SELECT ID FROM Users WHERE Username = $1", [
+        receiverUsername,
+      ]);
 
-      if (result.recordset.length === 0) {
+      if (result.rows.length === 0) {
         return res
           .status(404)
           .json({ success: false, message: "Receiver not found" });
       }
 
-      const receiverID = result.recordset[0].ID;
+      const receiverID = result.rows[0].id;
 
       // already friends?
-      const existingFriendship = await pool
-        .request()
-        .input("senderID", sql.Int, senderID)
-        .input("receiverID", sql.Int, receiverID).query(`
+      const existingFriendship = await dbQuery(
+        `
             SELECT 1 FROM Friends
-            WHERE (UserID = @senderID AND FriendID = @receiverID) OR (UserID = @receiverID AND FriendID = @senderID)
-          `);
+            WHERE (UserID = $1 AND FriendID = $2) OR (UserID = $2 AND FriendID = $1)
+          `,
+        [senderID, receiverID]
+      );
 
-      if (existingFriendship.recordset.length > 0) {
+      if (existingFriendship.rows.length > 0) {
         return res
           .status(400)
           .json({ success: false, message: "You are already friends" });
       }
 
       // already friend request exists?
-      const existingRequest = await pool
-        .request()
-        .input("senderID", sql.Int, senderID)
-        .input("receiverID", sql.Int, receiverID).query(`
+      const existingRequest = await dbQuery(
+        `
             SELECT 1 FROM FriendRequests
-            WHERE (SenderID = @senderID AND ReceiverID = @receiverID) 
-            OR (SenderID = @receiverID AND ReceiverID = @senderID)
-          `);
+            WHERE (SenderID = $1 AND ReceiverID = $2) 
+            OR (SenderID = $2 AND ReceiverID = $1)
+          `,
+        [senderID, receiverID]
+      );
 
-      if (existingRequest.recordset.length > 0) {
+      if (existingRequest.rows.length > 0) {
         return res
           .status(400)
           .json({ success: false, message: "Friend request already exists" });
       }
 
       // inserting req in db
-      await pool
-        .request()
-        .input("senderID", sql.Int, senderID)
-        .input("receiverID", sql.Int, receiverID).query(`
+      await dbQuery(
+        `
             INSERT INTO FriendRequests (SenderID, ReceiverID)
-            VALUES (@senderID, @receiverID)
-          `);
+            VALUES ($1, $2)
+          `,
+        [senderID, receiverID]
+      );
 
       res.status(200).json({ success: true, message: "Friend request sent!" });
     } catch (error) {
@@ -78,14 +73,13 @@ requestRoutes.post("/remove", async (req: Request, res: Response) => {
   const { senderID, receiverID } = req.body;
 
   try {
-    const pool = await connectDB();
-    await pool
-      .request()
-      .input("senderID", sql.Int, senderID)
-      .input("receiverID", sql.Int, receiverID).query(`
+    await dbQuery(
+      `
         DELETE FROM FriendRequests 
-        WHERE SenderID = @senderID AND ReceiverID = @receiverID
-      `);
+        WHERE SenderID = $1 AND ReceiverID = $2
+      `,
+      [senderID, receiverID]
+    );
 
     res.status(200).json({ success: true, message: "Friend request removed!" });
   } catch (error) {
@@ -98,20 +92,21 @@ requestRoutes.post("/requests", async (req: Request, res: Response) => {
   const { userID } = req.body;
 
   try {
-    const pool = await connectDB();
-
-    const result = await pool.request().input("userID", sql.Int, userID).query(`
+    const result = await dbQuery(
+      `
         SELECT 
-          FR.SenderID,
-          U.Username,
-          U.Avatar
+          FR.SenderID AS "SenderID",
+          U.Username AS "Username",
+          U.Avatar AS "Avatar"
         FROM FriendRequests FR
         JOIN Users U ON FR.SenderID = U.ID
-        WHERE FR.ReceiverID = @userID
-      `);
+        WHERE FR.ReceiverID = $1
+      `,
+      [userID]
+    );
 
-    if (result.recordset.length >= 0) {
-      res.status(200).json({ success: true, friendRequests: result.recordset });
+    if (result.rows.length >= 0) {
+      res.status(200).json({ success: true, friendRequests: result.rows });
     }
   } catch (error) {
     const err = error as Error;

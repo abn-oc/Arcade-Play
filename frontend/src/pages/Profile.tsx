@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { ChangeEvent, useContext, useEffect, useState } from "react";
 import {
   changePassword,
   editUsername,
@@ -9,6 +9,7 @@ import {
 } from "../services/authService";
 import { topInGame } from "../services/leaderboardService";
 import { userContext } from "../contexts/userContext";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 export default function Profile() {
   const [profile, setProfile] = useState<null | any>(null);
@@ -93,16 +94,33 @@ export default function Profile() {
     }
   };
 
-  const handlePfpChange = async (avatarNumber: number) => {
+  const handlePfpChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     try {
       setLoading(true);
-      await changeAvatar(avatarNumber);
+      const avatarBlob = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Failed to read avatar file"));
+          }
+        };
+        reader.onerror = () => reject(new Error("Failed to read avatar file"));
+        reader.readAsDataURL(file);
+      });
+
+      await changeAvatar(avatarBlob);
       setMessage("Profile picture updated!");
       loadProfile();
     } catch (err) {
       setMessage((err as Error).message);
     } finally {
       setLoading(false);
+      e.target.value = "";
     }
   };
 
@@ -138,39 +156,18 @@ export default function Profile() {
         </div>
       )}
       <img
-        src={`/assets/avatars/${profile.Avatar}.jpg`}
+        src={resolveAvatarSrc(profile.Avatar)}
         alt="avatar"
         className="w-24 rounded-full"
       />
 
-      {/* Add buttons to change avatar */}
-      <p>Click on any avatar to change your avatar</p>
-      <div className="flex flex-row gap-4">
-        <img
-          onClick={() => handlePfpChange(0)}
-          src={`/assets/avatars/${0}.jpg`}
-          alt=""
-          className="w-16 h-16"
-        />
-        <img
-          onClick={() => handlePfpChange(1)}
-          src={`/assets/avatars/${1}.jpg`}
-          alt=""
-          className="w-16 h-16"
-        />
-        <img
-          onClick={() => handlePfpChange(2)}
-          src={`/assets/avatars/${2}.jpg`}
-          alt=""
-          className="w-16 h-16"
-        />
-        <img
-          onClick={() => handlePfpChange(3)}
-          src={`/assets/avatars/${3}.jpg`}
-          alt=""
-          className="w-16 h-16"
-        />
-      </div>
+      <p>Upload an avatar image (JPG, PNG, WEBP, or GIF)</p>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handlePfpChange}
+        disabled={loading}
+      />
 
       <p>
         <strong>First Name:</strong> {profile.FirstName}

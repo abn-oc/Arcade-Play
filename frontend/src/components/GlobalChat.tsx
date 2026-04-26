@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { userContext } from "../contexts/userContext";
 import { GlobalMessage } from "../types/types";
 import { getMessages, sendMessage } from "../services/globalchatService";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 export default function GlobalChat() {
   const user = useContext(userContext)?.user;
@@ -72,7 +73,7 @@ export default function GlobalChat() {
         {globalMsgs.map((msg, index) => (
           <div key={index} className="mb-2 last:mb-0">
             <img
-              src={`assets/avatars/${msg.Avatar}.jpg`}
+              src={resolveAvatarSrc(msg.Avatar)}
               className="w-8 rounded-full inline mr-2"
             />
             <span className="font-semibold text-blue-700">{msg.Username}:</span>

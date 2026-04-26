@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
-import sql from "mssql";
-import { connectDB } from "../config/db";
+import { dbQuery } from "../config/db";
 
 const leaderboardRoutes = express.Router();
 
@@ -11,17 +10,18 @@ leaderboardRoutes.get(
     const { gameId } = req.params;
 
     try {
-      const pool = await connectDB();
-      const result = await pool.request().input("GameID", sql.Int, gameId)
-        .query(`
-        SELECT u.ID, u.Avatar, u.Username, l.Score
+      const result = await dbQuery(
+        `
+        SELECT u.ID AS "ID", u.Avatar AS "Avatar", u.Username AS "Username", l.Score AS "Score"
         FROM LeaderBoard l
         JOIN Users u ON l.UserID = u.ID
-        WHERE l.GameID = @GameID AND u.IsDeleted = 0
+        WHERE l.GameID = $1 AND u.IsDeleted = false
         ORDER BY l.Score DESC
-      `);
-      console.log(result.recordset);
-      return res.json(result.recordset);
+      `,
+        [Number(gameId)]
+      );
+      console.log(result.rows);
+      return res.json(result.rows);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Database error" });
@@ -36,23 +36,22 @@ leaderboardRoutes.get(
     const { userId, gameId } = req.params;
 
     try {
-      const pool = await connectDB();
-      const result = await pool
-        .request()
-        .input("UserID", sql.Int, userId)
-        .input("GameID", sql.Int, gameId).query(`
-        SELECT l.Score
+      const result = await dbQuery(
+        `
+        SELECT l.Score AS "Score"
         FROM LeaderBoard l
         JOIN Users u ON l.UserID = u.ID
-        WHERE l.UserID = @UserID AND l.GameID = @GameID AND u.IsDeleted = 0
-      `);
+        WHERE l.UserID = $1 AND l.GameID = $2 AND u.IsDeleted = false
+      `,
+        [Number(userId), Number(gameId)]
+      );
 
       // return 0 if not available
-      if (result.recordset.length === 0) {
+      if (result.rows.length === 0) {
         return res.json({ Score: 0 });
       }
 
-      return res.json(result.recordset[0]);
+      return res.json(result.rows[0]);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Database error" });
@@ -65,21 +64,15 @@ leaderboardRoutes.post("/", async (req: Request, res: Response) => {
   const { userId, gameId, score } = req.body;
 
   try {
-    //
-    const pool = await connectDB();
-    await pool
-      .request()
-      .input("UserID", sql.Int, userId)
-      .input("GameID", sql.Int, gameId)
-      .input("Score", sql.Int, score).query(`
-        MERGE LeaderBoard AS target
-        USING (SELECT @UserID AS UserID, @GameID AS GameID) AS source
-        ON (target.UserID = source.UserID AND target.GameID = source.GameID)
-        WHEN MATCHED THEN 
-          UPDATE SET Score = @Score
-        WHEN NOT MATCHED THEN
-          INSERT (UserID, GameID, Score) VALUES (@UserID, @GameID, @Score);
-      `);
+    await dbQuery(
+      `
+      INSERT INTO LeaderBoard (UserID, GameID, Score)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (UserID, GameID)
+      DO UPDATE SET Score = EXCLUDED.Score
+      `,
+      [userId, gameId, score]
+    );
 
     res.json({ message: "Score updated or inserted successfully" });
   } catch (err) {

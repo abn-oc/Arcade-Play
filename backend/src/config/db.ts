@@ -1,46 +1,23 @@
-import * as sql from "mssql";
 import "dotenv/config";
+import { Pool, QueryResult, QueryResultRow } from "pg";
 
-type SqlConfig = {
-  server: string;
-  database: string;
-  user: string;
-  password: string;
-  port: number;
-  pool: {
-    max: number;
-    min: number;
-    idleTimeoutMillis: number;
-  };
-  options: {
-    encrypt: boolean;
-    trustServerCertificate: boolean;
-  };
+const pgConfig = {
+  host: process.env.DB_HOST || "localhost",
+  port: Number(process.env.DB_PORT || 5432),
+  database: process.env.DB_NAME || "postgres",
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASS || "postgres",
+  max: 10,
+  idleTimeoutMillis: 30000,
 };
 
-const sqlConfig: SqlConfig = {
-  server: process.env.DB_SERVER || "",
-  database: process.env.DB_NAME || "",
-  user: process.env.DB_USER || "",
-  password: process.env.DB_PASS || "",
-  port: 56290,
-  pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000,
-  },
-  options: {
-    encrypt: true,
-    trustServerCertificate: true,
-  },
-};
+let pool: Pool | null = null;
 
-let pool: sql.ConnectionPool | null = null;
-
-export async function connectDB(): Promise<sql.ConnectionPool> {
+export async function connectDB(): Promise<Pool> {
   if (!pool) {
     try {
-      pool = await new sql.ConnectionPool(sqlConfig).connect();
+      pool = new Pool(pgConfig);
+      await pool.query("SELECT 1");
       console.log("Connected to Database");
     } catch (err) {
       console.error("Error connecting to database:", err);
@@ -52,8 +29,16 @@ export async function connectDB(): Promise<sql.ConnectionPool> {
 
 export async function disconnectDB() {
   if (pool) {
-    await pool.close();
+    await pool.end();
     pool = null;
     console.log("Database connection closed");
   }
+}
+
+export async function dbQuery<T extends QueryResultRow = any>(
+  text: string,
+  params: any[] = []
+): Promise<QueryResult<T>> {
+  const activePool = await connectDB();
+  return activePool.query<T>(text, params);
 }

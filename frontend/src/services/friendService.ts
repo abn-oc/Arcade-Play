@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Friend, PrivateMessage, User } from "../types/types";
+import { AvatarValue } from "../utils/avatar";
 
 const API_URL = "http://localhost:3000/friends";
 
@@ -104,10 +105,10 @@ export const getProfileID = async (id: number): Promise<User> => {
   }
 };
 
-export const getAvatarID = async (id: number): Promise<number> => {
+export const getAvatarID = async (id: number): Promise<AvatarValue> => {
   try {
     const profile = await getProfileID(id);
-    return Number(profile.Avatar) ?? 0; // Return 0 if Avatar is null
+    return profile.Avatar;
   } catch (error: any) {
     console.error("Failed to get avatar by ID:", error);
     throw new Error("Could not retrieve avatar");

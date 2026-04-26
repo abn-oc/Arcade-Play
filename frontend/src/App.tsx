@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import TicTacToe from "./pages/TicTacToe";
 import Profile from "./pages/Profile";
 import ProfileID from "./pages/ProfileID";
+import { resolveAvatarSrc } from "./utils/avatar";
 
 export default function App() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function App() {
               {/* User Info Section */}
               <div className="flex items-center gap-3">
                 <img
-                  src={`assets/avatars/${user.Avatar}.jpg`}
+                  src={resolveAvatarSrc(user.Avatar)}
                   alt="User avatar"
                   className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                 />

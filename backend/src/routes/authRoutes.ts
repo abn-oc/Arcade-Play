@@ -2,10 +2,8 @@ import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sql from "mssql";
-import { connectDB } from "../config/db";
-import { UserRecord, AuthRequestBody } from "../types/authTypes";
-import { error } from "console";
+import { dbQuery } from "../config/db";
+import { AuthRequestBody } from "../types/authTypes";
 
 const authRoutes = express.Router();
 
@@ -41,47 +39,39 @@ authRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
       // checking if username is unique
-      const checkUsername = await pool
-        .request()
-        .input("Username", sql.NVarChar(50), username)
-        .query(
-          "SELECT COUNT(*) AS count FROM Users WHERE Username = @Username"
-        );
+      const checkUsername = await dbQuery(
+        "SELECT COUNT(*) AS count FROM Users WHERE Username = $1",
+        [username]
+      );
 
-      if (checkUsername.recordset[0].count > 0) {
+      if (Number(checkUsername.rows[0].count) > 0) {
         return res.status(409).json({ error: "Username already taken" });
       }
 
       // hashing password if email/password signup is done
       const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
-      // preparing query variables
-      const request = pool
-        .request()
-        .input("FirstName", sql.NVarChar(50), firstName)
-        .input("LastName", sql.VarChar(50), lastName)
-        .input("Email", sql.NVarChar(100), email)
-        .input("Passwords", sql.NVarChar(255), hashedPassword || "")
-        .input("Username", sql.NVarChar(50), username);
-
-      if (authProvider !== "email") {
-        request
-          .input("AuthProvider", sql.NVarChar(50), authProvider)
-          .input("ProviderUserID", sql.NVarChar(255), providerUserID);
-      } else {
-        request
-          .input("AuthProvider", sql.NVarChar(50), "email")
-          .input("ProviderUserID", sql.NVarChar(255), email);
-      }
+      const authProviderValue = authProvider !== "email" ? authProvider : "email";
+      const providerUserIDValue =
+        authProvider !== "email" ? providerUserID : email;
 
       // query
-      await request.query(`
+      await dbQuery(
+        `
       INSERT INTO Users (FirstName, LastName, Email, Passwords, Username, AuthProvider, ProviderUserID) 
-      VALUES (@FirstName, @LastName, @Email, @Passwords, @Username, @AuthProvider, @ProviderUserID)
-    `);
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `,
+        [
+          firstName,
+          lastName,
+          email,
+          hashedPassword || "",
+          username,
+          authProviderValue,
+          providerUserIDValue,
+        ]
+      );
 
       // success
       res.status(201).json({ message: "User registered successfully" });
@@ -105,28 +95,21 @@ authRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
-      // making query
-      let userQuery = `SELECT * FROM Users WHERE Email = @Email AND IsDeleted = 0 AND AuthProvider = @AuthProvider AND ProviderUserID = @ProviderUserID`;
-      let request = pool
-        .request()
-        .input("Email", sql.NVarChar(100), email)
-        .input("AuthProvider", sql.NVarChar(50), authProvider)
-        .input("ProviderUserID", sql.NVarChar(255), providerUserID);
-
       // running query and seeing if its not returning 0 results
-      const user = await request.query(userQuery);
-      if (user.recordset.length === 0) {
+      const user = await dbQuery(
+        "SELECT * FROM Users WHERE Email = $1 AND IsDeleted = false AND AuthProvider = $2 AND ProviderUserID = $3",
+        [email, authProvider, providerUserID]
+      );
+      if (user.rows.length === 0) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
       // storing user from result in a variable
-      const userRecord: UserRecord = user.recordset[0];
+      const userRecord: any = user.rows[0];
 
       // check if password is valid if user signed in through email/password
-      if (authProvider === "email" && password && userRecord.Passwords) {
-        const isValid = await bcrypt.compare(password, userRecord.Passwords);
+      if (authProvider === "email" && password && userRecord.passwords) {
+        const isValid = await bcrypt.compare(password, userRecord.passwords);
         if (!isValid) {
           return res.status(401).json({ error: "Invalid credentials" });
         }
@@ -134,7 +117,7 @@ authRoutes.post(
 
       // make token
       const token = jwt.sign(
-        { id: userRecord.ID, email: userRecord.Email },
+        { id: userRecord.id, email: userRecord.email },
         SECRET_KEY,
         { expiresIn: TOKEN_EXPIRY }
       );
@@ -194,19 +177,16 @@ authRoutes.get(
 
       const userId = req.user.id;
 
-      const pool = await connectDB();
-      const user = await pool
-        .request()
-        .input("ID", sql.Int, userId)
-        .query(
-          "SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed, Bio FROM Users WHERE ID = @ID"
-        );
+      const user = await dbQuery(
+        'SELECT ID AS "ID", FirstName AS "FirstName", LastName AS "LastName", Email AS "Email", Username AS "Username", Avatar AS "Avatar", AuthProvider AS "AuthProvider", GamesPlayed AS "GamesPlayed", Bio AS "Bio" FROM Users WHERE ID = $1',
+        [userId]
+      );
 
-      if (user.recordset.length === 0) {
+      if (user.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json(user.recordset[0]);
+      res.json(user.rows[0]);
     } catch (err) {
       console.error("Profile error:", err);
       res.status(500).json({ error: "Internal server error" });
@@ -230,26 +210,21 @@ authRoutes.patch(
     }
 
     try {
-      const pool = await connectDB();
-
       // Check if new username already exists
-      const usernameCheck = await pool
-        .request()
-        .input("Username", sql.NVarChar(50), newUsername)
-        .query(
-          "SELECT COUNT(*) AS count FROM Users WHERE Username = @Username"
-        );
+      const usernameCheck = await dbQuery(
+        "SELECT COUNT(*) AS count FROM Users WHERE Username = $1",
+        [newUsername]
+      );
 
-      if (usernameCheck.recordset[0].count > 0) {
+      if (Number(usernameCheck.rows[0].count) > 0) {
         return res.status(409).json({ error: "Username already taken" });
       }
 
       // query to update username
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .input("Username", sql.NVarChar(50), newUsername)
-        .query("UPDATE Users SET Username = @Username WHERE ID = @ID");
+      await dbQuery("UPDATE Users SET Username = $1 WHERE ID = $2", [
+        newUsername,
+        req.user.id,
+      ]);
 
       res.json({ message: "Username updated successfully" });
     } catch (err) {
@@ -277,21 +252,20 @@ authRoutes.patch(
     }
 
     try {
-      const pool = await connectDB();
-      const userQuery = await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .query("SELECT Passwords FROM Users WHERE ID = @ID");
+      const userQuery = await dbQuery(
+        "SELECT Passwords FROM Users WHERE ID = $1",
+        [req.user.id]
+      );
 
-      const user = userQuery.recordset[0];
+      const user = userQuery.rows[0];
 
-      if (!user.Passwords) {
+      if (!user.passwords) {
         return res
           .status(404)
           .json({ error: "Only email/password accounts can change passwords" });
       }
 
-      const isMatch = await bcrypt.compare(originalPassword, user.Passwords);
+      const isMatch = await bcrypt.compare(originalPassword, user.passwords);
       if (!isMatch) {
         return res
           .status(401)
@@ -300,11 +274,10 @@ authRoutes.patch(
 
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .input("NewPassword", sql.NVarChar(255), hashedNewPassword)
-        .query("UPDATE Users SET Passwords = @NewPassword WHERE ID = @ID");
+      await dbQuery("UPDATE Users SET Passwords = $1 WHERE ID = $2", [
+        hashedNewPassword,
+        req.user.id,
+      ]);
 
       res.json({ message: "Password updated successfully" });
     } catch (err) {
@@ -324,24 +297,20 @@ authRoutes.delete(
     }
 
     try {
-      const pool = await connectDB();
-
       // timestamp to UN-UNIQUE the UNIQUE attributes
       const timestamp = Date.now().toString();
 
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .input("Email", sql.VarChar(100), timestamp)
-        .input("Username", sql.NVarChar(50), timestamp)
-        .input("ProviderUserID", sql.NVarChar(255), timestamp).query(`
+      await dbQuery(
+        `
         UPDATE Users
-        SET IsDeleted = 1,
-            Email = @Email,
-            Username = @Username,
-            ProviderUserID = @ProviderUserID
-        WHERE ID = @ID
-      `);
+        SET IsDeleted = true,
+            Email = $1,
+            Username = $2,
+            ProviderUserID = $3
+        WHERE ID = $4
+      `,
+        [timestamp, timestamp, timestamp, req.user.id]
+      );
 
       res.json({ message: "Account deleted successfully" });
     } catch (err) {
@@ -361,30 +330,30 @@ authRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
       // getting current games played
-      const result = await pool.request().input("ID", sql.Int, req.user.id)
-        .query(`
+      const result = await dbQuery(
+        `
           SELECT GamesPlayed FROM Users
-          WHERE ID = @ID AND IsDeleted = 0
-        `);
+          WHERE ID = $1 AND IsDeleted = false
+        `,
+        [req.user.id]
+      );
 
-      if (result.recordset.length === 0) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      const currentGamesPlayed = result.recordset[0].GamesPlayed;
+      const currentGamesPlayed = result.rows[0].gamesplayed;
 
       // update it with + 1
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .input("NewCount", sql.Int, currentGamesPlayed + 1).query(`
+      await dbQuery(
+        `
           UPDATE Users
-          SET GamesPlayed = @NewCount
-          WHERE ID = @ID AND IsDeleted = 0
-        `);
+          SET GamesPlayed = $1
+          WHERE ID = $2 AND IsDeleted = false
+        `,
+        [currentGamesPlayed + 1, req.user.id]
+      );
 
       res.json({ message: "GamesPlayed incremented successfully" });
     } catch (err) {
@@ -410,28 +379,24 @@ authRoutes.patch(
     }
 
     try {
-      const pool = await connectDB();
-
       // checking if user isnt deleted
-      const userQuery = await pool
-        .request()
-        .input("ID", sql.Int, req.user.id)
-        .query("SELECT IsDeleted FROM Users WHERE ID = @ID");
+      const userQuery = await dbQuery("SELECT IsDeleted FROM Users WHERE ID = $1", [
+        req.user.id,
+      ]);
 
-      const user = userQuery.recordset[0];
+      const user = userQuery.rows[0];
 
-      if (user.IsDeleted === 1) {
+      if (user.isdeleted === true) {
         return res
           .status(400)
           .json({ error: "User account is deleted, cannot update bio" });
       }
 
       // updating bio query
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user?.id)
-        .input("Bio", sql.NVarChar(255), newBio)
-        .query("UPDATE Users SET Bio = @Bio WHERE ID = @ID");
+      await dbQuery("UPDATE Users SET Bio = $1 WHERE ID = $2", [
+        newBio,
+        req.user?.id,
+      ]);
 
       res.json({ message: "Bio updated successfully" });
     } catch (err) {
@@ -450,39 +415,35 @@ authRoutes.patch(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { avatarNumber } = req.body;
+    const { avatarBlob } = req.body;
 
-    if (avatarNumber === undefined || avatarNumber === null) {
-      return res.status(400).json({ error: "Avatar number is required" });
+    if (!avatarBlob || typeof avatarBlob !== "string") {
+      return res.status(400).json({ error: "Avatar blob is required" });
     }
 
-    if (avatarNumber < 0 || avatarNumber > 3) {
-      return res.status(400).json({ error: "Valid Avatar number is required" });
+    if (!avatarBlob.startsWith("data:image/")) {
+      return res.status(400).json({ error: "Valid image blob is required" });
     }
 
     try {
-      const pool = await connectDB();
-
       // checking if user isnt deleted
-      const userQuery = await pool
-        .request()
-        .input("ID", sql.Int, req.user?.id)
-        .query("SELECT IsDeleted FROM Users WHERE ID = @ID");
+      const userQuery = await dbQuery("SELECT IsDeleted FROM Users WHERE ID = $1", [
+        req.user?.id,
+      ]);
 
-      const user = userQuery.recordset[0];
+      const user = userQuery.rows[0];
 
-      if (user.IsDeleted === 1) {
+      if (user.isdeleted === true) {
         return res
           .status(400)
           .json({ error: "User account is deleted, cannot update avatar" });
       }
 
       // updating avatar query
-      await pool
-        .request()
-        .input("ID", sql.Int, req.user?.id)
-        .input("AvatarNumber", sql.Int, avatarNumber)
-        .query("UPDATE Users SET Avatar = @AvatarNumber WHERE ID = @ID");
+      await dbQuery("UPDATE Users SET Avatar = $1 WHERE ID = $2", [
+        avatarBlob,
+        req.user?.id,
+      ]);
 
       res.json({ message: "Avatar updated successfully" });
     } catch (err) {

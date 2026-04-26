@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
-import sql from "mssql";
-import { connectDB } from "../config/db";
+import { dbQuery } from "../config/db";
 
 const friendRoutes = express.Router();
 
@@ -14,29 +13,21 @@ friendRoutes.post("/add", async (req: Request, res: Response): Promise<any> => {
   }
 
   try {
-    const pool = await connectDB();
-
     // checking if friendship already exists
-    const check = await pool
-      .request()
-      .input("UserID", sql.Int, userId)
-      .input("FriendID", sql.Int, friendId)
-      .query(
-        "SELECT * FROM Friends WHERE UserID = @UserID AND FriendID = @FriendID"
-      );
+    const check = await dbQuery(
+      "SELECT * FROM Friends WHERE UserID = $1 AND FriendID = $2",
+      [userId, friendId]
+    );
 
-    if (check.recordset.length > 0) {
+    if (check.rows.length > 0) {
       return res.status(409).json({ message: "Users are already friends" });
     }
 
     // insert friends query
-    await pool
-      .request()
-      .input("UserID", sql.Int, userId)
-      .input("FriendID", sql.Int, friendId)
-      .query(
-        "INSERT INTO Friends (UserID, FriendID) VALUES (@UserID, @FriendID)"
-      );
+    await dbQuery("INSERT INTO Friends (UserID, FriendID) VALUES ($1, $2)", [
+      userId,
+      friendId,
+    ]);
 
     res.status(201).json({ message: "Friend added successfully" });
   } catch (err) {
@@ -55,47 +46,40 @@ friendRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
       // getting all friendships
-      const friendsResult = await pool
-        .request()
-        .input("UserID", sql.Int, userId).query(`
+      const friendsResult = await dbQuery(
+        `
         SELECT * FROM Friends 
-        WHERE UserID = @UserID OR FriendID = @UserID
-      `);
+        WHERE UserID = $1 OR FriendID = $1
+      `,
+        [userId]
+      );
 
       // getting just ids that arent user's id
-      const friendIds: number[] = friendsResult.recordset.map((row) =>
-        row.UserID === userId ? row.FriendID : row.UserID
+      const friendIds: number[] = friendsResult.rows.map((row: any) =>
+        row.userid === userId ? row.friendid : row.userid
       );
 
       if (friendIds.length === 0) {
         return res.status(200).json([]);
       }
 
-      // preparing request for those friend ids but in sql parameters
-      const request = pool.request();
-      friendIds.forEach((id, idx) => {
-        request.input(`id${idx}`, sql.Int, id);
-      });
-
-      // added commans in them
-      const inClause = friendIds.map((_, idx) => `@id${idx}`).join(",");
-
       // now query
-      const userQuery = await request.query(`
-      SELECT ID, Username, Avatar, isDeleted FROM Users 
-      WHERE ID IN (${inClause})
-    `);
+      const userQuery = await dbQuery(
+        `
+      SELECT ID, Username, Avatar, IsDeleted FROM Users 
+      WHERE ID = ANY($1::int[])
+    `,
+        [friendIds]
+      );
 
       // making array of ids and usernames from result
-      const friends = userQuery.recordset
-        .filter((user) => user.isDeleted !== true)
-        .map((user) => ({
-          id: user.ID,
-          username: user.Username,
-          avatar: user.Avatar,
+      const friends = userQuery.rows
+        .filter((user: any) => user.isdeleted !== true)
+        .map((user: any) => ({
+          id: user.id,
+          username: user.username,
+          avatar: user.avatar,
         }));
 
       res.status(200).json(friends);
@@ -116,38 +100,27 @@ friendRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
       // checking if the friendship exists
-      const check = await pool
-        .request()
-        .input("UserID", sql.Int, userId)
-        .input("FriendID", sql.Int, friendId)
-        .query(
-          "SELECT * FROM Friends WHERE (UserID = @UserID AND FriendID = @FriendID) OR (UserID = @FriendID AND FriendID = @UserID)"
-        );
+      const check = await dbQuery(
+        "SELECT * FROM Friends WHERE (UserID = $1 AND FriendID = $2) OR (UserID = $2 AND FriendID = $1)",
+        [userId, friendId]
+      );
 
-      if (check.recordset.length === 0) {
+      if (check.rows.length === 0) {
         return res.status(404).json({ message: "Friendship not found" });
       }
 
       // remove friendship query
-      await pool
-        .request()
-        .input("UserID", sql.Int, userId)
-        .input("FriendID", sql.Int, friendId)
-        .query(
-          "DELETE FROM Friends WHERE (UserID = @UserID AND FriendID = @FriendID) OR (UserID = @FriendID AND FriendID = @UserID)"
-        );
+      await dbQuery(
+        "DELETE FROM Friends WHERE (UserID = $1 AND FriendID = $2) OR (UserID = $2 AND FriendID = $1)",
+        [userId, friendId]
+      );
 
       // removing private messages between them
-      await pool
-        .request()
-        .input("UserID", sql.Int, userId)
-        .input("FriendID", sql.Int, friendId)
-        .query(
-          "DELETE FROM PrivateMessages WHERE (SenderID = @UserID AND ReceiverID = @FriendID) OR (SenderID = @FriendID AND ReceiverID = @UserID)"
-        );
+      await dbQuery(
+        "DELETE FROM PrivateMessages WHERE (SenderID = $1 AND ReceiverID = $2) OR (SenderID = $2 AND ReceiverID = $1)",
+        [userId, friendId]
+      );
 
       res
         .status(200)
@@ -169,24 +142,28 @@ friendRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
-      const result = await pool
-        .request()
-        .input("User1", sql.Int, userId1)
-        .input("User2", sql.Int, userId2).query(`
+      const result = await dbQuery(
+        `
         SELECT pm.SenderID, pm.ReceiverID, pm.Content
         FROM PrivateMessages pm
-        JOIN Users u1 ON u1.ID = @User1 AND u1.IsDeleted = 0
-        JOIN Users u2 ON u2.ID = @User2 AND u2.IsDeleted = 0
+        JOIN Users u1 ON u1.ID = $1 AND u1.IsDeleted = false
+        JOIN Users u2 ON u2.ID = $2 AND u2.IsDeleted = false
         WHERE 
-          (pm.SenderID = @User1 AND pm.ReceiverID = @User2)
+          (pm.SenderID = $1 AND pm.ReceiverID = $2)
           OR 
-          (pm.SenderID = @User2 AND pm.ReceiverID = @User1)
+          (pm.SenderID = $2 AND pm.ReceiverID = $1)
         ORDER BY pm.SentTime ASC
-      `);
+      `,
+        [userId1, userId2]
+      );
 
-      res.status(200).json(result.recordset);
+      res.status(200).json(
+        result.rows.map((row: any) => ({
+          SenderID: row.senderid,
+          ReceiverID: row.receiverid,
+          Content: row.content,
+        }))
+      );
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
     }
@@ -204,17 +181,14 @@ friendRoutes.post(
     }
 
     try {
-      const pool = await connectDB();
-
       // inserting msg query
-      await pool
-        .request()
-        .input("SenderID", sql.Int, senderId)
-        .input("ReceiverID", sql.Int, receiverId)
-        .input("Content", sql.NVarChar, content).query(`
+      await dbQuery(
+        `
         INSERT INTO PrivateMessages (SenderID, ReceiverID, Content, SentTime)
-        VALUES (@SenderID, @ReceiverID, @Content, GETDATE())
-      `);
+        VALUES ($1, $2, $3, NOW())
+      `,
+        [senderId, receiverId, content]
+      );
 
       res.status(201).json({ message: "Message sent successfully" });
     } catch (err) {
@@ -232,19 +206,16 @@ friendRoutes.get(
       if (isNaN(userId)) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
-      const pool = await connectDB();
-      const user = await pool
-        .request()
-        .input("ID", sql.Int, userId)
-        .query(
-          "SELECT ID, FirstName, LastName, Email, Username, Avatar, AuthProvider, GamesPlayed, Bio FROM Users WHERE ID = @ID"
-        );
+      const user = await dbQuery(
+        'SELECT ID AS "ID", FirstName AS "FirstName", LastName AS "LastName", Email AS "Email", Username AS "Username", Avatar AS "Avatar", AuthProvider AS "AuthProvider", GamesPlayed AS "GamesPlayed", Bio AS "Bio" FROM Users WHERE ID = $1',
+        [userId]
+      );
 
-      if (user.recordset.length === 0) {
+      if (user.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      return res.json(user.recordset[0]);
+      return res.json(user.rows[0]);
     } catch (err) {
       console.error("Profile error:", err);
       res.status(500).json({ error: "Internal server error" });

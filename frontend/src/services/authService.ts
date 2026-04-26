@@ -31,7 +31,7 @@ interface UserProfile {
   LastName: string;
   Email: string;
   Username: string;
-  Avatar: string | null;
+  Avatar: string | number | null;
   AuthProvider: string | null;
   GamesPlayed: number;
 }
@@ -255,7 +255,7 @@ export const editBio = async (newBio: string): Promise<void> => {
   }
 };
 
-export const changeAvatar = async (avatarNumber: number): Promise<void> => {
+export const changeAvatar = async (avatarBlob: string): Promise<void> => {
   const token = localStorage.getItem("auth_token");
 
   if (!token) {
@@ -265,7 +265,7 @@ export const changeAvatar = async (avatarNumber: number): Promise<void> => {
   try {
     await axios.patch(
       `${API_URL}/change-avatar`,
-      { avatarNumber },
+      { avatarBlob },
       {
         headers: {
           Authorization: `Bearer ${token}`,

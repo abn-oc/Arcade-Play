@@ -3,6 +3,7 @@ import { getGameDetails } from "../services/gameService";
 import { useNavigate } from "react-router-dom";
 import { getGameLeaderboard } from "../services/leaderboardService";
 import { GameDetails as GameDetailsType, LeadboardEntry } from "../types/types";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 export default function GameDetails({ id }: { id: number }) {
   const [game, setGame] = useState<GameDetailsType | null>(null);
@@ -98,7 +99,7 @@ export default function GameDetails({ id }: { id: number }) {
               className="flex justify-between p-2 gap-8 border-b border-gray-300 rounded"
             >
               <img
-                src={`assets/avatars/${entry.Avatar}.jpg`}
+                src={resolveAvatarSrc(entry.Avatar)}
                 className="w-12"
               />
               <span className="font-medium">{entry.Username}</span>

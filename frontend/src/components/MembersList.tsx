@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { getUserScore } from "../services/leaderboardService";
 import { getAvatarID } from "../services/friendService";
+import { AvatarValue, resolveAvatarSrc } from "../utils/avatar";
 
 // the members array passed to this component already have id and username
 export default function MembersList({
   members,
 }: {
   members: {
-    avatar: number;
+    avatar: AvatarValue;
     id: number;
     username: string;
   }[];
 }) {
   const [scoreList, setScoreList] = useState<{ Score: number }[]>([]);
-  const [avatars, setAvatars] = useState<number[]>([]);
+  const [avatars, setAvatars] = useState<AvatarValue[]>([]);
 
   // on members changing, fetch scores avatars and set them (we already have id and username)
   useEffect(() => {
@@ -23,12 +24,11 @@ export default function MembersList({
         members.map((member) => getUserScore(member.id, 1))
       );
       setScoreList(scores);
-      // for every member,fetch avatarid and set avatar
-      members.forEach(async (member) => {
-        const newAvatar = await getAvatarID(member.id);
-        setAvatars((prev) => [...prev, newAvatar]);
-      });
-      setScoreList(scores);
+
+      const fetchedAvatars = await Promise.all(
+        members.map((member) => getAvatarID(member.id))
+      );
+      setAvatars(fetchedAvatars);
     }
 
     // ofc only call that if members are more than 0 (i want to try removing this check, see what it does later)
@@ -49,7 +49,7 @@ export default function MembersList({
           <div key={member.id} className="mb-2 last:mb-0">
             <span className="font-semibold text-blue-700 flex flex-row gap-2 items-center">
               <img
-                src={`/assets/avatars/${avatars[index]}.jpg`}
+                src={resolveAvatarSrc(avatars[index])}
                 className="w-12 rounded-full"
               />
               {member.username} —{" "}

@@ -4,7 +4,7 @@ export type User = {
     LastName: string;
     Email: string;
     Username: string;
-    Avatar: string | null;
+    Avatar: string | number | null;
     AuthProvider: string | null;
     GamesPlayed: number
 }
@@ -12,7 +12,7 @@ export type User = {
 export type Friend = {
     id: number;
     username: string;
-    avatar: number;
+    avatar: string | number | null;
 }
 
 // for avatars, use the avatar of the selected friend
@@ -25,7 +25,7 @@ export type PrivateMessage = {
 export type GlobalMessage = {
     SenderID: number;
     Username: string;
-    Avatar: number;
+    Avatar: string | number | null;
     Content: string;
 }
 
@@ -46,7 +46,7 @@ export type GameDetails = {
 
 export type LeadboardEntry = {
     ID: number;
-    Avatar: number;
+    Avatar: string | number | null;
     Username: string;
     Score: number;
 }
@@ -54,5 +54,5 @@ export type LeadboardEntry = {
 export type FriendRequest = {
     SenderID: number;
     Username: string;
-    Avatar: number;
+    Avatar: string | number | null;
 }

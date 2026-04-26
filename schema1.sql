@@ -32,7 +32,7 @@ CREATE TABLE Users (
     Email VARCHAR(100) UNIQUE NOT NULL,
     Passwords NVARCHAR(100) NULL,
     Username NVARCHAR(50) UNIQUE NOT NULL,
-    Avatar INT NOT NULL DEFAULT (0),
+    Avatar NVARCHAR(MAX) NULL,
     GamesPlayed INT DEFAULT 0 CHECK (GamesPlayed >= 0),
 	IsDeleted BIT NOT NULL DEFAULT 0,
 	AuthProvider NVARCHAR(50) NULL,
@@ -137,7 +137,7 @@ END;
 INSERT INTO Users 
 (FirstName, LastName, Email, Passwords, Username, Avatar, GamesPlayed, IsDeleted, AuthProvider, ProviderUserID, Bio)
 VALUES 
-('John', 'Doe', 'johndoe@example.com', 'Password123', 'JohnDoe', 1, 5, 0, NULL, NULL, 'Excited to play!');
+('John', 'Doe', 'johndoe@example.com', 'Password123', 'JohnDoe', NULL, 5, 0, NULL, NULL, 'Excited to play!');
 
 
 -- Insert 16 sample messages into GlobalChat

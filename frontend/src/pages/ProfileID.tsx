@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getProfileID } from "../services/friendService";
 import { topInGame } from "../services/leaderboardService";
 import { useParams } from "react-router-dom";
+import { resolveAvatarSrc } from "../utils/avatar";
 
 export default function ProfileID() {
   const { id } = useParams();
@@ -60,7 +61,7 @@ export default function ProfileID() {
       )}
 
       <img
-        src={`/assets/avatars/${profile.Avatar}.jpg`}
+        src={resolveAvatarSrc(profile.Avatar)}
         alt="avatar"
         className="w-24"
       />

@@ -1,18 +1,16 @@
 import express, { Request, Response } from "express";
-import sql from "mssql";
-import { connectDB } from "../config/db";
+import { dbQuery } from "../config/db";
 
 const gameRoutes = express.Router();
 
 // get all games route
 gameRoutes.get("/games", async (req: Request, res: Response) => {
   try {
-    const pool = await connectDB();
-    const result = await pool
-      .request()
-      .query("SELECT GameID, GameName, Icon FROM Games");
+    const result = await dbQuery(
+      'SELECT GameID AS "GameID", GameName AS "GameName", Icon AS "Icon" FROM Games'
+    );
 
-    res.json(result.recordset);
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
@@ -29,17 +27,16 @@ gameRoutes.get(
     }
 
     try {
-      const pool = await connectDB();
-      const result = await pool
-        .request()
-        .input("GameID", sql.Int, gameId)
-        .query("SELECT * FROM Games WHERE GameID = @GameID");
+      const result = await dbQuery(
+        'SELECT GameID AS "GameID", GameName AS "GameName", GameDesc AS "GameDesc", MinPlayers AS "MinPlayers", MaxPlayers AS "MaxPlayers", Icon AS "Icon" FROM Games WHERE GameID = $1',
+        [gameId]
+      );
 
-      if (result.recordset.length === 0) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ message: "Game not found" });
       }
 
-      res.json(result.recordset[0]);
+      res.json(result.rows[0]);
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
     }
